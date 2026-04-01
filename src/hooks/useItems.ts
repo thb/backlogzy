@@ -33,6 +33,8 @@ export function useItems(projectId: string | null) {
       createdAt: nowISO(),
       completedAt: null,
       notes: "",
+      plannedStart: null,
+      plannedEnd: null,
       position: getNextPosition(),
     } as Task)
   }

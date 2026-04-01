@@ -14,7 +14,7 @@ export function DetailPanel({ task, onUpdate, onUpdateStatus, onClose }: Props) 
   const [notes, setNotes] = useState(task.notes ?? "")
   const [description, setDescription] = useState(task.description)
   const panelRef = useRef<HTMLDivElement>(null)
-  const notesTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  const notesTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   // Sync state when task changes
   useEffect(() => {
@@ -116,6 +116,39 @@ export function DetailPanel({ task, onUpdate, onUpdateStatus, onClose }: Props) 
                 <span className="text-gray-600">{formatDate(task.completedAt)}</span>
               </div>
             )}
+
+            <div>
+              <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Planned start</label>
+              <input
+                type="date"
+                value={task.plannedStart ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value || null
+                  onUpdate(task.id, {
+                    plannedStart: val,
+                    // Auto-set end = start if end is empty or before new start
+                    plannedEnd:
+                      val && (!task.plannedEnd || task.plannedEnd < val)
+                        ? val
+                        : task.plannedEnd,
+                  })
+                }}
+                className="w-full text-sm text-gray-700 border border-gray-200 rounded px-2 py-1 outline-none focus:border-gray-300"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Planned end</label>
+              <input
+                type="date"
+                value={task.plannedEnd ?? ""}
+                min={task.plannedStart ?? undefined}
+                onChange={(e) => {
+                  onUpdate(task.id, { plannedEnd: e.target.value || null })
+                }}
+                className="w-full text-sm text-gray-700 border border-gray-200 rounded px-2 py-1 outline-none focus:border-gray-300"
+              />
+            </div>
           </div>
 
           {/* Notes */}

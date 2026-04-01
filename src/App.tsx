@@ -1,18 +1,24 @@
 import { useState, useEffect, useRef } from "react"
 import { ProjectTabs } from "./components/ProjectTabs"
 import { BacklogTable } from "./components/BacklogTable"
+import { PlanningView } from "./components/PlanningView"
 import { DetailPanel } from "./components/DetailPanel"
 import { useProjects } from "./hooks/useProjects"
 import { useItems } from "./hooks/useItems"
+import { useAllTasks } from "./hooks/useAllItems"
 import { exportData, importData } from "./lib/backup"
 import type { Task } from "./db/types"
+
+type View = "board" | "planning"
 
 function App() {
   const { projects, addProject, renameProject, deleteProject } = useProjects()
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
   const [detailItemId, setDetailItemId] = useState<string | null>(null)
+  const [view, setView] = useState<View>("board")
   const initRef = useRef(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
   const {
     items,
     addTask,
@@ -24,8 +30,13 @@ function App() {
     reorderItems,
   } = useItems(activeProjectId)
 
+  const allTasks = useAllTasks()
+
+  // Find detail task across all items (board) or allTasks (planning)
   const detailTask = detailItemId
-    ? (items.find((i) => i.id === detailItemId && i.type === "task") as Task | undefined)
+    ? (view === "board"
+      ? (items.find((i) => i.id === detailItemId && i.type === "task") as Task | undefined)
+      : allTasks.find((t) => t.id === detailItemId))
     : undefined
 
   // Auto-select first project or create default
@@ -57,17 +68,72 @@ function App() {
     if (file) importData(file)
   }
 
+  // updateItem that works across projects (for planning view)
+  function handleUpdateFromDetail(id: string, changes: Partial<Task>) {
+    // itemsCollection.update works regardless of current projectId filter
+    import("./db/collections").then(({ itemsCollection }) => {
+      itemsCollection.update(id, (draft) => {
+        Object.assign(draft, changes)
+      })
+    })
+  }
+
+  function handleUpdateStatusFromDetail(id: string, status: Task["status"]) {
+    import("./db/collections").then(({ itemsCollection }) => {
+      itemsCollection.update(id, (draft) => {
+        ; (draft as Task).status = status
+        if (status === "IN_QA" && !(draft as Task).completedAt) {
+          ; (draft as Task).completedAt = new Date().toISOString()
+        }
+      })
+    })
+  }
+
   return (
     <div className="h-screen flex flex-col bg-white">
-      <div className="flex items-center justify-between border-b border-gray-200 bg-white">
-        <ProjectTabs
-          projects={projects}
-          activeId={activeProjectId}
-          onSelect={setActiveProjectId}
-          onAdd={addProject}
-          onRename={renameProject}
-          onDelete={handleDeleteProject}
-        />
+      {/* Top bar */}
+      <div className="flex items-center border-b border-gray-200 bg-white">
+        {/* View toggle */}
+        <div className="flex items-center gap-0 px-2 pt-2 shrink-0">
+          <button
+            onClick={() => setView("planning")}
+            className={`px-3 py-1.5 text-sm rounded-t-md border border-b-0 cursor-pointer ${view === "planning"
+                ? "border-gray-200 bg-white text-gray-900 font-medium"
+                : "border-transparent text-gray-400 hover:text-gray-600"
+              }`}
+          >
+            Planning
+          </button>
+          <button
+            onClick={() => setView("board")}
+            className={`px-3 py-1.5 text-sm rounded-t-md border border-b-0 cursor-pointer ${view === "board"
+                ? "border-gray-200 bg-white text-gray-900 font-medium"
+                : "border-transparent text-gray-400 hover:text-gray-600"
+              }`}
+          >
+            Boards
+          </button>
+        </div>
+
+        {/* Separator */}
+        <div className="w-px h-5 bg-gray-200 mx-1 shrink-0" />
+
+        {/* Project tabs (board view only) */}
+        {view === "board" && (
+          <ProjectTabs
+            projects={projects}
+            activeId={activeProjectId}
+            onSelect={setActiveProjectId}
+            onAdd={addProject}
+            onRename={renameProject}
+            onDelete={handleDeleteProject}
+          />
+        )}
+
+        {/* Spacer */}
+        {view === "planning" && <div className="flex-1" />}
+
+        {/* Export/Import */}
         <div className="flex items-center gap-2 px-3 shrink-0">
           <button
             onClick={exportData}
@@ -92,21 +158,37 @@ function App() {
           />
         </div>
       </div>
-      <BacklogTable
-        items={items}
-        onUpdateItem={updateItem}
-        onUpdateStatus={updateTaskStatus}
-        onDeleteItem={deleteItem}
-        onReorder={reorderItems}
-        onAddTask={() => addTask()}
-        onAddSeparator={() => addSeparator()}
-        onOpenDetail={setDetailItemId}
-      />
+
+      {/* Main content */}
+      {view === "board" ? (
+        <BacklogTable
+          items={items}
+          onUpdateItem={updateItem}
+          onUpdateStatus={updateTaskStatus}
+          onDeleteItem={deleteItem}
+          onReorder={reorderItems}
+          onAddTask={() => addTask()}
+          onAddSeparator={() => addSeparator()}
+          onOpenDetail={setDetailItemId}
+        />
+      ) : (
+        <PlanningView
+          projects={projects}
+          tasks={allTasks}
+          onOpenDetail={setDetailItemId}
+        />
+      )}
+
+      {/* Detail panel (shared) */}
       {detailTask && (
         <DetailPanel
           task={detailTask}
-          onUpdate={updateItem}
-          onUpdateStatus={updateTaskStatus}
+          onUpdate={
+            view === "board" ? updateItem : handleUpdateFromDetail
+          }
+          onUpdateStatus={
+            view === "board" ? updateTaskStatus : handleUpdateStatusFromDetail
+          }
           onClose={() => setDetailItemId(null)}
         />
       )}

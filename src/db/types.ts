@@ -45,6 +45,8 @@ export type Task = {
   createdAt: string
   completedAt: string | null
   notes: string
+  plannedStart: string | null // "2026-04-01" date-only
+  plannedEnd: string | null   // "2026-04-03" date-only
   position: number
 }
 
