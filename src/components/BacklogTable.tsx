@@ -22,6 +22,7 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import type { Item, Status } from "../db/types"
+import { useColumnSizing } from "../hooks/useColumnSizing"
 import { EditableCell } from "./EditableCell"
 import { StatusSelect } from "./StatusSelect"
 import { HoursCell } from "./HoursCell"
@@ -154,6 +155,8 @@ export function BacklogTable({
   onAddSeparator,
   onOpenDetail,
 }: Props) {
+  const { columnSizing, setColumnSizing } = useColumnSizing("board")
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
@@ -166,6 +169,7 @@ export function BacklogTable({
         id: "drag",
         header: "",
         size: 32,
+        enableResizing: false,
         cell: () => null, // Rendered by SortableRow directly
       }),
       columnHelper.display({
@@ -287,6 +291,7 @@ export function BacklogTable({
         id: "actions",
         header: "",
         size: 32,
+        enableResizing: false,
         cell: ({ row }) => (
           <button
             onClick={() => onDeleteItem(row.original.id)}
@@ -306,6 +311,10 @@ export function BacklogTable({
     columns,
     getCoreRowModel: getCoreRowModel(),
     getRowId: (row) => row.id,
+    enableColumnResizing: true,
+    columnResizeMode: "onChange",
+    state: { columnSizing },
+    onColumnSizingChange: setColumnSizing,
   })
 
   function handleDragEnd(event: DragEndEvent) {
@@ -325,19 +334,26 @@ export function BacklogTable({
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
-        <table className="w-full border-collapse text-sm">
+        <table className="w-full border-collapse text-sm" style={{ tableLayout: "fixed" }}>
           <thead>
             <tr className="bg-gray-50">
               {table.getHeaderGroups().map((headerGroup) =>
                 headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="border border-gray-200 px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide"
+                    className="relative border border-gray-200 px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide"
                     style={{ width: header.getSize() }}
                   >
                     {flexRender(
                       header.column.columnDef.header,
                       header.getContext()
+                    )}
+                    {header.column.getCanResize() && (
+                      <div
+                        onMouseDown={header.getResizeHandler()}
+                        onTouchStart={header.getResizeHandler()}
+                        className={`absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none hover:bg-blue-400 ${header.column.getIsResizing() ? "bg-blue-500" : ""}`}
+                      />
                     )}
                   </th>
                 ))

@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-table"
 import type { Project, Task } from "../db/types"
 import { STATUS_CONFIG, PROJECT_COLORS } from "../db/types"
+import { useColumnSizing } from "../hooks/useColumnSizing"
 import {
   getMonday,
   addDays,
@@ -36,16 +37,16 @@ function TaskChip({
   return (
     <button
       onClick={onClick}
-      className="w-full text-left px-1.5 py-1 rounded text-xs hover:bg-gray-50 cursor-pointer flex items-center gap-1.5 min-w-0"
+      className="w-full text-left px-1.5 py-1 rounded text-xs hover:bg-gray-50 cursor-pointer flex items-start gap-1.5 min-w-0"
     >
       <span
-        className={`shrink-0 w-2 h-2 rounded-full ${cfg.bg} border ${cfg.text.replace("text-", "border-")}`}
+        className={`shrink-0 w-2 h-2 rounded-full mt-0.5 ${cfg.bg} border ${cfg.text.replace("text-", "border-")}`}
       />
-      <span className="truncate flex-1 text-gray-700">
+      <span className="flex-1 text-gray-700 break-words whitespace-normal">
         {task.description || "Untitled"}
       </span>
       {task.estimation != null && (
-        <span className="shrink-0 text-gray-400">{task.estimation}h</span>
+        <span className="shrink-0 text-gray-400 mt-0.5">{task.estimation}h</span>
       )}
     </button>
   )
@@ -53,6 +54,7 @@ function TaskChip({
 
 export function PlanningView({ projects, tasks, onOpenDetail }: Props) {
   const [weekStart, setWeekStart] = useState(() => getMonday(new Date()))
+  const { columnSizing, setColumnSizing } = useColumnSizing("planning")
 
   const dates = useMemo(
     () => getDaysInRange(weekStart, 7),
@@ -148,6 +150,10 @@ export function PlanningView({ projects, tasks, onOpenDetail }: Props) {
     columns,
     getCoreRowModel: getCoreRowModel(),
     getRowId: (row) => row.date,
+    enableColumnResizing: true,
+    columnResizeMode: "onChange",
+    state: { columnSizing },
+    onColumnSizingChange: setColumnSizing,
   })
 
   const weekEndDate = addDays(weekStart, 6)
@@ -179,7 +185,7 @@ export function PlanningView({ projects, tasks, onOpenDetail }: Props) {
 
       {/* Table */}
       <div className="flex-1 overflow-auto">
-        <table className="w-full border-collapse text-sm">
+        <table className="w-full border-collapse text-sm" style={{ tableLayout: "fixed" }}>
           <thead className="sticky top-0 z-10">
             <tr className="bg-gray-50">
               {table.getHeaderGroups().map((hg) =>
@@ -188,10 +194,17 @@ export function PlanningView({ projects, tasks, onOpenDetail }: Props) {
                   return (
                     <th
                       key={header.id}
-                      className={`border border-gray-200 px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide ${pastel || "bg-gray-50"}`}
+                      className={`relative border border-gray-200 px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide ${pastel || "bg-gray-50"}`}
                       style={{ width: header.getSize() }}
                     >
                       {flexRender(header.column.columnDef.header, header.getContext())}
+                      {header.column.getCanResize() && (
+                        <div
+                          onMouseDown={header.getResizeHandler()}
+                          onTouchStart={header.getResizeHandler()}
+                          className={`absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none hover:bg-blue-400 ${header.column.getIsResizing() ? "bg-blue-500" : ""}`}
+                        />
+                      )}
                     </th>
                   )
                 })
