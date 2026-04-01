@@ -27,9 +27,24 @@ export const STATUS_CONFIG: Record<
   REDO: { label: "REDO", bg: "bg-red-100", text: "text-red-800" },
 }
 
+export const PROJECT_COLORS = [
+  { name: "gray", dot: "bg-gray-400", tab: "border-gray-300", pastel: "bg-gray-50" },
+  { name: "red", dot: "bg-red-400", tab: "border-red-400", pastel: "bg-red-50" },
+  { name: "orange", dot: "bg-orange-400", tab: "border-orange-400", pastel: "bg-orange-50" },
+  { name: "yellow", dot: "bg-yellow-400", tab: "border-yellow-400", pastel: "bg-yellow-50" },
+  { name: "green", dot: "bg-green-400", tab: "border-green-400", pastel: "bg-green-50" },
+  { name: "teal", dot: "bg-teal-400", tab: "border-teal-400", pastel: "bg-teal-50" },
+  { name: "blue", dot: "bg-blue-400", tab: "border-blue-400", pastel: "bg-blue-50" },
+  { name: "purple", dot: "bg-purple-400", tab: "border-purple-400", pastel: "bg-purple-50" },
+  { name: "pink", dot: "bg-pink-400", tab: "border-pink-400", pastel: "bg-pink-50" },
+] as const
+
+export type ProjectColor = (typeof PROJECT_COLORS)[number]["name"]
+
 export type Project = {
   id: string
   name: string
+  color: ProjectColor
   position: number
   createdAt: string
 }

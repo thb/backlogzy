@@ -1,6 +1,6 @@
 import { useLiveQuery } from "@tanstack/react-db"
 import { projectsCollection } from "../db/collections"
-import type { Project } from "../db/types"
+import type { Project, ProjectColor } from "../db/types"
 import { generateId, nowISO } from "../lib/utils"
 
 export function useProjects() {
@@ -18,6 +18,7 @@ export function useProjects() {
     projectsCollection.insert({
       id: generateId(),
       name,
+      color: "gray" as ProjectColor,
       position: maxPos + 1,
       createdAt: nowISO(),
     })
@@ -29,9 +30,30 @@ export function useProjects() {
     })
   }
 
+  function setProjectColor(id: string, color: ProjectColor) {
+    projectsCollection.update(id, (draft) => {
+      draft.color = color
+    })
+  }
+
+  function reorderProjects(orderedIds: string[]) {
+    orderedIds.forEach((id, index) => {
+      projectsCollection.update(id, (draft) => {
+        draft.position = index + 1
+      })
+    })
+  }
+
   function deleteProject(id: string) {
     projectsCollection.delete(id)
   }
 
-  return { projects, addProject, renameProject, deleteProject }
+  return {
+    projects,
+    addProject,
+    renameProject,
+    setProjectColor,
+    reorderProjects,
+    deleteProject,
+  }
 }

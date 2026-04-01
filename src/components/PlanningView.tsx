@@ -6,7 +6,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import type { Project, Task } from "../db/types"
-import { STATUS_CONFIG } from "../db/types"
+import { STATUS_CONFIG, PROJECT_COLORS } from "../db/types"
 import {
   getMonday,
   addDays,
@@ -115,11 +115,13 @@ export function PlanningView({ projects, tasks, onOpenDetail }: Props) {
           )
         },
       }),
-      ...activeProjects.map((project) =>
-        columnHelper.display({
+      ...activeProjects.map((project) => {
+        const colorCfg = PROJECT_COLORS.find((c) => c.name === project.color) ?? PROJECT_COLORS[0]
+        return columnHelper.display({
           id: project.id,
           header: project.name,
           size: 200,
+          meta: { pastel: colorCfg.pastel },
           cell: ({ row }) => {
             const dayTasks = taskIndex[row.original.date]?.[project.id] ?? []
             if (dayTasks.length === 0) return null
@@ -136,7 +138,7 @@ export function PlanningView({ projects, tasks, onOpenDetail }: Props) {
             )
           },
         })
-      ),
+      }),
     ],
     [activeProjects, taskIndex, onOpenDetail]
   )
@@ -181,15 +183,18 @@ export function PlanningView({ projects, tasks, onOpenDetail }: Props) {
           <thead className="sticky top-0 z-10">
             <tr className="bg-gray-50">
               {table.getHeaderGroups().map((hg) =>
-                hg.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="border border-gray-200 px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide"
-                    style={{ width: header.getSize() }}
-                  >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                  </th>
-                ))
+                hg.headers.map((header) => {
+                  const pastel = (header.column.columnDef.meta as any)?.pastel ?? ""
+                  return (
+                    <th
+                      key={header.id}
+                      className={`border border-gray-200 px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide ${pastel || "bg-gray-50"}`}
+                      style={{ width: header.getSize() }}
+                    >
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </th>
+                  )
+                })
               )}
             </tr>
           </thead>
@@ -201,15 +206,18 @@ export function PlanningView({ projects, tasks, onOpenDetail }: Props) {
                   key={row.id}
                   className={isToday ? "bg-blue-50/30" : ""}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      className="border border-gray-200 align-top"
-                      style={{ width: cell.column.getSize() }}
-                    >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
+                  {row.getVisibleCells().map((cell) => {
+                    const pastel = (cell.column.columnDef.meta as any)?.pastel ?? ""
+                    return (
+                      <td
+                        key={cell.id}
+                        className={`border border-gray-200 align-top ${pastel}`}
+                        style={{ width: cell.column.getSize() }}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    )
+                  })}
                 </tr>
               )
             })}

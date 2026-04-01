@@ -12,7 +12,7 @@ import type { Task } from "./db/types"
 type View = "board" | "planning"
 
 function App() {
-  const { projects, addProject, renameProject, deleteProject } = useProjects()
+  const { projects, addProject, renameProject, setProjectColor, reorderProjects, deleteProject } = useProjects()
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null)
   const [detailItemId, setDetailItemId] = useState<string | null>(null)
   const [view, setView] = useState<View>("board")
@@ -127,6 +127,8 @@ function App() {
             onAdd={addProject}
             onRename={renameProject}
             onDelete={handleDeleteProject}
+            onSetColor={setProjectColor}
+            onReorder={reorderProjects}
           />
         )}
 
