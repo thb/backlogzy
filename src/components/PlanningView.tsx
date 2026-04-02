@@ -9,6 +9,7 @@ import type { Project, Task } from "../db/types"
 import { STATUS_CONFIG, PROJECT_COLORS } from "../db/types"
 import { formatDuration } from "../lib/duration"
 import { useColumnSizing } from "../hooks/useColumnSizing"
+import { TaskPicker } from "./TaskPicker"
 import {
   getMonday,
   addDays,
@@ -19,10 +20,14 @@ import {
 
 type DateRow = { date: string }
 
+type CellTarget = { date: string; projectId: string } | null
+
 type Props = {
   projects: Project[]
   tasks: Task[]
   onOpenDetail: (id: string) => void
+  onAssignTask: (taskId: string, date: string) => void
+  onCreateTask: (projectId: string, description: string, date: string) => void
 }
 
 const columnHelper = createColumnHelper<DateRow>()
@@ -53,9 +58,16 @@ function TaskChip({
   )
 }
 
-export function PlanningView({ projects, tasks, onOpenDetail }: Props) {
+export function PlanningView({
+  projects,
+  tasks,
+  onOpenDetail,
+  onAssignTask,
+  onCreateTask,
+}: Props) {
   const [weekStart, setWeekStart] = useState(() => getMonday(new Date()))
   const { columnSizing, setColumnSizing } = useColumnSizing("planning")
+  const [pickerTarget, setPickerTarget] = useState<CellTarget>(null)
 
   const dates = useMemo(
     () => getDaysInRange(weekStart, 7),
@@ -87,18 +99,8 @@ export function PlanningView({ projects, tasks, onOpenDetail }: Props) {
     return idx
   }, [dates, projects, tasks])
 
-  // Only show projects that have at least one task in the visible week
-  const activeProjects = useMemo(() => {
-    const projectIdsWithTasks = new Set<string>()
-    for (const d of dates) {
-      for (const p of projects) {
-        if ((taskIndex[d]?.[p.id]?.length ?? 0) > 0) {
-          projectIdsWithTasks.add(p.id)
-        }
-      }
-    }
-    return projects.filter((p) => projectIdsWithTasks.has(p.id))
-  }, [dates, projects, taskIndex])
+  // Show projects that have tasks this week, OR all projects (so we can add to empty ones)
+  const visibleProjects = projects
 
   const columns = useMemo(
     () => [
@@ -118,32 +120,68 @@ export function PlanningView({ projects, tasks, onOpenDetail }: Props) {
           )
         },
       }),
-      ...activeProjects.map((project) => {
+      ...visibleProjects.map((project) => {
         const colorCfg = PROJECT_COLORS.find((c) => c.name === project.color) ?? PROJECT_COLORS[0]
         return columnHelper.display({
           id: project.id,
           header: project.name,
           size: 200,
-          meta: { pastel: colorCfg.pastel },
+          meta: { pastel: colorCfg.pastel, projectId: project.id },
           cell: ({ row }) => {
-            const dayTasks = taskIndex[row.original.date]?.[project.id] ?? []
-            if (dayTasks.length === 0) return null
+            const date = row.original.date
+            const dayTasks = taskIndex[date]?.[project.id] ?? []
+            const isPickerOpen =
+              pickerTarget?.date === date && pickerTarget?.projectId === project.id
+
+            // Tasks available for this project (not already planned on this date)
+            const projectTasks = tasks.filter(
+              (t) => t.projectId === project.id
+            )
+
             return (
-              <div className="flex flex-col gap-0.5 py-0.5">
-                {dayTasks.map((t) => (
-                  <TaskChip
-                    key={t.id}
-                    task={t}
-                    onClick={() => onOpenDetail(t.id)}
+              <div
+                className="relative min-h-[28px] cursor-pointer"
+                onClick={() => {
+                  if (!isPickerOpen) {
+                    setPickerTarget({ date, projectId: project.id })
+                  }
+                }}
+              >
+                {dayTasks.length > 0 && (
+                  <div
+                    className="flex flex-col gap-0.5 py-0.5"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {dayTasks.map((t) => (
+                      <TaskChip
+                        key={t.id}
+                        task={t}
+                        onClick={() => onOpenDetail(t.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+                {isPickerOpen && (
+                  <TaskPicker
+                    projectTasks={projectTasks}
+                    onSelect={(taskId) => {
+                      onAssignTask(taskId, date)
+                      setPickerTarget(null)
+                    }}
+                    onCreate={(desc) => {
+                      onCreateTask(project.id, desc, date)
+                      setPickerTarget(null)
+                    }}
+                    onClose={() => setPickerTarget(null)}
                   />
-                ))}
+                )}
               </div>
             )
           },
         })
       }),
     ],
-    [activeProjects, taskIndex, onOpenDetail]
+    [visibleProjects, taskIndex, onOpenDetail, onAssignTask, onCreateTask, pickerTarget, tasks]
   )
 
   const table = useReactTable({

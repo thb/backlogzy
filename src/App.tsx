@@ -7,7 +7,9 @@ import { useProjects } from "./hooks/useProjects"
 import { useItems } from "./hooks/useItems"
 import { useAllTasks } from "./hooks/useAllItems"
 import { exportData, importData } from "./lib/backup"
-import type { Task } from "./db/types"
+import { itemsCollection } from "./db/collections"
+import type { Task, Status } from "./db/types"
+import { generateId, nowISO } from "./lib/utils"
 
 type View = "board" | "planning"
 
@@ -70,22 +72,45 @@ function App() {
 
   // updateItem that works across projects (for planning view)
   function handleUpdateFromDetail(id: string, changes: Partial<Task>) {
-    // itemsCollection.update works regardless of current projectId filter
-    import("./db/collections").then(({ itemsCollection }) => {
-      itemsCollection.update(id, (draft) => {
-        Object.assign(draft, changes)
-      })
+    itemsCollection.update(id, (draft) => {
+      Object.assign(draft, changes)
     })
   }
 
+  function handleAssignTask(taskId: string, date: string) {
+    itemsCollection.update(taskId, (draft) => {
+      const t = draft as Task
+      t.plannedStart = date
+      if (!t.plannedEnd || t.plannedEnd < date) {
+        t.plannedEnd = date
+      }
+    })
+  }
+
+  function handleCreateTaskOnPlanning(projectId: string, description: string, date: string) {
+    itemsCollection.insert({
+      id: generateId(),
+      projectId,
+      type: "task",
+      description,
+      status: "TODO" as Status,
+      estimation: null,
+      timeSpent: null,
+      createdAt: nowISO(),
+      completedAt: null,
+      notes: "",
+      plannedStart: date,
+      plannedEnd: date,
+      position: Date.now(),
+    } as Task)
+  }
+
   function handleUpdateStatusFromDetail(id: string, status: Task["status"]) {
-    import("./db/collections").then(({ itemsCollection }) => {
-      itemsCollection.update(id, (draft) => {
-        ; (draft as Task).status = status
-        if ((status === "IN_QA" || status === "IN_PROD") && !(draft as Task).completedAt) {
-          ; (draft as Task).completedAt = new Date().toISOString()
-        }
-      })
+    itemsCollection.update(id, (draft) => {
+      ;(draft as Task).status = status
+      if ((status === "IN_QA" || status === "IN_PROD") && !(draft as Task).completedAt) {
+        ;(draft as Task).completedAt = new Date().toISOString()
+      }
     })
   }
 
@@ -178,6 +203,8 @@ function App() {
           projects={projects}
           tasks={allTasks}
           onOpenDetail={setDetailItemId}
+          onAssignTask={handleAssignTask}
+          onCreateTask={handleCreateTaskOnPlanning}
         />
       )}
 
