@@ -207,7 +207,19 @@ export function PlanningView({
               <div className="flex items-center gap-0.5 mt-0.5">
                 {count > 0 && (
                   <span className="text-xs leading-none">
-                    {"🍅".repeat(Math.min(count, 10))}
+                    {Array.from({ length: Math.min(count, 10) }).map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onRemovePomodoro(d)
+                        }}
+                        className="cursor-pointer hover:opacity-60"
+                        title="Remove pomodoro"
+                      >
+                        🍅
+                      </button>
+                    ))}
                   </span>
                 )}
                 <button
@@ -220,18 +232,6 @@ export function PlanningView({
                 >
                   +
                 </button>
-                {count > 0 && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onRemovePomodoro(d)
-                    }}
-                    className="text-[10px] text-gray-300 hover:text-red-400 cursor-pointer leading-none"
-                    title="Remove pomodoro"
-                  >
-                    −
-                  </button>
-                )}
               </div>
               <HabitPicker
                 date={d}
