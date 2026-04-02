@@ -59,7 +59,7 @@ export function useItems(projectId: string | null) {
   function updateTaskStatus(id: string, status: Status) {
     itemsCollection.update(id, (draft) => {
       ;(draft as Task).status = status
-      if (status === "IN_QA" && !(draft as Task).completedAt) {
+      if ((status === "IN_QA" || status === "IN_PROD") && !(draft as Task).completedAt) {
         ;(draft as Task).completedAt = nowISO()
       }
     })

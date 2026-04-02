@@ -89,7 +89,7 @@ export function DetailPanel({ task, onUpdate, onUpdateStatus, onClose }: Props) 
           </div>
 
           {/* Metadata */}
-          <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-3 gap-3 text-sm">
             <div>
               <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Status</label>
               <select
@@ -106,16 +106,36 @@ export function DetailPanel({ task, onUpdate, onUpdateStatus, onClose }: Props) 
             </div>
 
             <div>
-              <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Created</label>
-              <span className="text-gray-600">{formatDate(task.createdAt)}</span>
+              <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Estim.</label>
+              <input
+                type="number"
+                step="0.5"
+                min="0"
+                value={task.estimation ?? ""}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value)
+                  onUpdate(task.id, { estimation: isNaN(v) ? null : v })
+                }}
+                placeholder="-"
+                className="w-full text-sm text-gray-700 border border-gray-200 rounded px-2 py-1 outline-none focus:border-gray-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
             </div>
 
-            {task.completedAt && (
-              <div>
-                <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Done</label>
-                <span className="text-gray-600">{formatDate(task.completedAt)}</span>
-              </div>
-            )}
+            <div>
+              <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Spent</label>
+              <input
+                type="number"
+                step="0.5"
+                min="0"
+                value={task.timeSpent ?? ""}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value)
+                  onUpdate(task.id, { timeSpent: isNaN(v) ? null : v })
+                }}
+                placeholder="-"
+                className="w-full text-sm text-gray-700 border border-gray-200 rounded px-2 py-1 outline-none focus:border-gray-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
+            </div>
 
             <div>
               <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Planned start</label>
@@ -149,6 +169,18 @@ export function DetailPanel({ task, onUpdate, onUpdateStatus, onClose }: Props) 
                 className="w-full text-sm text-gray-700 border border-gray-200 rounded px-2 py-1 outline-none focus:border-gray-300"
               />
             </div>
+
+            <div>
+              <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Done</label>
+              <input
+                type="date"
+                value={task.completedAt ? task.completedAt.slice(0, 10) : ""}
+                onChange={(e) => {
+                  onUpdate(task.id, { completedAt: e.target.value ? new Date(e.target.value).toISOString() : null })
+                }}
+                className="w-full text-sm text-gray-700 border border-gray-200 rounded px-2 py-1 outline-none focus:border-gray-300"
+              />
+            </div>
           </div>
 
           {/* Notes */}
@@ -161,6 +193,11 @@ export function DetailPanel({ task, onUpdate, onUpdateStatus, onClose }: Props) 
               className="w-full min-h-[200px] text-sm text-gray-700 outline-none resize-y bg-gray-50 rounded-md p-3 border border-gray-200 focus:border-gray-300 font-mono"
             />
             <p className="text-xs text-gray-300 mt-1">Markdown supported. Auto-saved.</p>
+          </div>
+
+          <div>
+            <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Created</label>
+            <span className="text-sm text-gray-600">{formatDate(task.createdAt)}</span>
           </div>
         </div>
       </div>

@@ -82,7 +82,7 @@ function App() {
     import("./db/collections").then(({ itemsCollection }) => {
       itemsCollection.update(id, (draft) => {
         ; (draft as Task).status = status
-        if (status === "IN_QA" && !(draft as Task).completedAt) {
+        if ((status === "IN_QA" || status === "IN_PROD") && !(draft as Task).completedAt) {
           ; (draft as Task).completedAt = new Date().toISOString()
         }
       })
