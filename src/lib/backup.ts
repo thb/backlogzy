@@ -25,7 +25,7 @@ export function exportData() {
   const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
   a.href = url
-  a.download = `${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}_backlogzy_export.json`
+  a.download = `backlogzy-${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}.json`
   a.click()
   URL.revokeObjectURL(url)
 }

@@ -12,6 +12,7 @@ import type { Task, Status } from "./db/types"
 import { generateId, nowISO } from "./lib/utils"
 import { usePomodoros } from "./hooks/usePomodoros"
 import { FileSyncButton } from "./components/FileSyncButton"
+import { useHabits } from "./hooks/useHabits"
 
 type View = "board" | "planning"
 
@@ -36,6 +37,7 @@ function App() {
 
   const allTasks = useAllTasks()
   const { getCount: pomodoroCount, addPomodoro, removePomodoro } = usePomodoros()
+  const { getHabits, toggleHabit } = useHabits()
 
   // Find detail task across all items (board) or allTasks (planning)
   const detailTask = detailItemId
@@ -213,6 +215,8 @@ function App() {
           pomodoroCount={pomodoroCount}
           onAddPomodoro={addPomodoro}
           onRemovePomodoro={removePomodoro}
+          getHabits={getHabits}
+          onToggleHabit={toggleHabit}
         />
       )}
 
