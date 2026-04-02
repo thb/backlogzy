@@ -12,19 +12,20 @@ export type Status = (typeof STATUSES)[number]
 
 export const STATUS_CONFIG: Record<
   Status,
-  { label: string; bg: string; text: string }
+  { label: string; bg: string; text: string; dot: string }
 > = {
-  TODO: { label: "TODO", bg: "bg-yellow-100", text: "text-yellow-800" },
+  TODO: { label: "TODO", bg: "bg-yellow-100", text: "text-yellow-800", dot: "bg-yellow-400" },
   IN_DESIGN: {
     label: "IN DESIGN",
     bg: "bg-purple-100",
     text: "text-purple-800",
+    dot: "bg-purple-400",
   },
-  IN_DEV: { label: "IN DEV", bg: "bg-blue-100", text: "text-blue-800" },
-  IN_QA: { label: "IN Q/A", bg: "bg-teal-100", text: "text-teal-800" },
-  IN_PROD: { label: "IN PROD", bg: "bg-green-100", text: "text-green-800" },
-  WAITING: { label: "WAITING", bg: "bg-gray-100", text: "text-gray-600" },
-  REDO: { label: "REDO", bg: "bg-red-100", text: "text-red-800" },
+  IN_DEV: { label: "IN DEV", bg: "bg-blue-100", text: "text-blue-800", dot: "bg-blue-400" },
+  IN_QA: { label: "IN Q/A", bg: "bg-teal-100", text: "text-teal-800", dot: "bg-teal-400" },
+  IN_PROD: { label: "IN PROD", bg: "bg-green-100", text: "text-green-800", dot: "bg-green-500" },
+  WAITING: { label: "WAITING", bg: "bg-gray-100", text: "text-gray-600", dot: "bg-gray-400" },
+  REDO: { label: "REDO", bg: "bg-red-100", text: "text-red-800", dot: "bg-red-500" },
 }
 
 export const PROJECT_COLORS = [

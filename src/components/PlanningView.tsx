@@ -40,7 +40,7 @@ function TaskChip({
       className="w-full text-left px-1.5 py-1 rounded text-xs hover:bg-gray-50 cursor-pointer flex items-start gap-1.5 min-w-0"
     >
       <span
-        className={`shrink-0 w-2 h-2 rounded-full mt-0.5 ${cfg.bg} border ${cfg.text.replace("text-", "border-")}`}
+        className={`shrink-0 w-2.5 h-2.5 rounded-full mt-0.5 ${cfg.dot}`}
       />
       <span className="flex-1 text-gray-700 break-words whitespace-normal">
         {task.description || "Untitled"}
