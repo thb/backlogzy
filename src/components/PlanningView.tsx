@@ -126,8 +126,11 @@ function TaskChip({
   const cfg = STATUS_CONFIG[task.status]
   return (
     <button
-      onClick={onClick}
-      className="w-full text-left px-1.5 py-1 rounded text-xs hover:bg-gray-50 cursor-pointer flex items-start gap-1.5 min-w-0"
+      onClick={(e) => {
+        e.stopPropagation()
+        onClick()
+      }}
+      className="w-full text-left px-1.5 py-1 rounded text-xs hover:bg-yellow-50 cursor-pointer flex items-start gap-1.5 min-w-0"
     >
       <span
         className={`shrink-0 w-2.5 h-2.5 rounded-full mt-0.5 ${cfg.dot}`}
@@ -262,18 +265,10 @@ export function PlanningView({
 
             return (
               <div
-                className="relative min-h-[28px] cursor-pointer"
-                onClick={() => {
-                  if (!isPickerOpen) {
-                    setPickerTarget({ date, projectId: project.id })
-                  }
-                }}
+                className={`relative min-h-[28px] ${isPickerOpen ? "bg-yellow-50" : ""}`}
               >
                 {dayTasks.length > 0 && (
-                  <div
-                    className="flex flex-col gap-0.5 py-0.5"
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  <div className="flex flex-col gap-0.5 py-0.5">
                     {dayTasks.map((t) => (
                       <TaskChip
                         key={t.id}
@@ -282,6 +277,12 @@ export function PlanningView({
                       />
                     ))}
                   </div>
+                )}
+                {!isPickerOpen && (
+                  <div
+                    onClick={() => setPickerTarget({ date, projectId: project.id })}
+                    className="min-h-[20px] cursor-pointer rounded hover:bg-yellow-50"
+                  />
                 )}
                 {isPickerOpen && (
                   <TaskPicker
