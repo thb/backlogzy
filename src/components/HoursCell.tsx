@@ -1,17 +1,18 @@
 import { useState, useRef, useEffect } from "react"
+import { parseDuration, formatDuration } from "../lib/duration"
 
 type Props = {
-  value: number | null
+  value: number | null // minutes
   onChange: (value: number | null) => void
 }
 
 export function HoursCell({ value, onChange }: Props) {
   const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(value?.toString() ?? "")
+  const [draft, setDraft] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    setDraft(value?.toString() ?? "")
+    setDraft(value != null ? formatDuration(value) : "")
   }, [value])
 
   useEffect(() => {
@@ -23,8 +24,7 @@ export function HoursCell({ value, onChange }: Props) {
 
   function commit() {
     setEditing(false)
-    const num = parseFloat(draft)
-    onChange(isNaN(num) ? null : num)
+    onChange(parseDuration(draft))
   }
 
   if (!editing) {
@@ -33,7 +33,7 @@ export function HoursCell({ value, onChange }: Props) {
         className="cursor-text px-2 py-1 text-center text-gray-600 min-h-[28px]"
         onClick={() => setEditing(true)}
       >
-        {value != null ? `${value}h` : <span className="text-gray-300">-</span>}
+        {value != null ? formatDuration(value) : <span className="text-gray-300">-</span>}
       </div>
     )
   }
@@ -41,20 +41,19 @@ export function HoursCell({ value, onChange }: Props) {
   return (
     <input
       ref={inputRef}
-      type="number"
-      step="0.5"
-      min="0"
+      type="text"
       value={draft}
       onChange={(e) => setDraft(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => {
         if (e.key === "Enter") commit()
         if (e.key === "Escape") {
-          setDraft(value?.toString() ?? "")
+          setDraft(value != null ? formatDuration(value) : "")
           setEditing(false)
         }
       }}
-      className="w-full bg-transparent outline-none px-2 py-1 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+      placeholder="2h, 30m, 1j"
+      className="w-full bg-transparent outline-none px-2 py-1 text-center text-sm"
     />
   )
 }

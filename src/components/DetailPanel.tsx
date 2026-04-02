@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import type { Task, Status } from "../db/types"
 import { STATUS_CONFIG, STATUSES } from "../db/types"
 import { formatDate } from "../lib/utils"
+import { parseDuration, formatDuration } from "../lib/duration"
 
 type Props = {
   task: Task
@@ -108,32 +109,32 @@ export function DetailPanel({ task, onUpdate, onUpdateStatus, onClose }: Props) 
             <div>
               <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Estim.</label>
               <input
-                type="number"
-                step="0.5"
-                min="0"
-                value={task.estimation ?? ""}
-                onChange={(e) => {
-                  const v = parseFloat(e.target.value)
-                  onUpdate(task.id, { estimation: isNaN(v) ? null : v })
+                type="text"
+                defaultValue={task.estimation != null ? formatDuration(task.estimation) : ""}
+                onBlur={(e) => {
+                  onUpdate(task.id, { estimation: parseDuration(e.target.value) })
                 }}
-                placeholder="-"
-                className="w-full text-sm text-gray-700 border border-gray-200 rounded px-2 py-1 outline-none focus:border-gray-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+                }}
+                placeholder="2h, 30m, 1j"
+                className="w-full text-sm text-gray-700 border border-gray-200 rounded px-2 py-1 outline-none focus:border-gray-300"
               />
             </div>
 
             <div>
               <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Spent</label>
               <input
-                type="number"
-                step="0.5"
-                min="0"
-                value={task.timeSpent ?? ""}
-                onChange={(e) => {
-                  const v = parseFloat(e.target.value)
-                  onUpdate(task.id, { timeSpent: isNaN(v) ? null : v })
+                type="text"
+                defaultValue={task.timeSpent != null ? formatDuration(task.timeSpent) : ""}
+                onBlur={(e) => {
+                  onUpdate(task.id, { timeSpent: parseDuration(e.target.value) })
                 }}
-                placeholder="-"
-                className="w-full text-sm text-gray-700 border border-gray-200 rounded px-2 py-1 outline-none focus:border-gray-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") (e.target as HTMLInputElement).blur()
+                }}
+                placeholder="2h, 30m, 1j"
+                className="w-full text-sm text-gray-700 border border-gray-200 rounded px-2 py-1 outline-none focus:border-gray-300"
               />
             </div>
 

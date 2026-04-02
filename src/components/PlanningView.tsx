@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-table"
 import type { Project, Task } from "../db/types"
 import { STATUS_CONFIG, PROJECT_COLORS } from "../db/types"
+import { formatDuration } from "../lib/duration"
 import { useColumnSizing } from "../hooks/useColumnSizing"
 import {
   getMonday,
@@ -46,7 +47,7 @@ function TaskChip({
         {task.description || "Untitled"}
       </span>
       {task.estimation != null && (
-        <span className="shrink-0 text-gray-400 mt-0.5">{task.estimation}h</span>
+        <span className="shrink-0 text-gray-400 mt-0.5">{formatDuration(task.estimation)}</span>
       )}
     </button>
   )

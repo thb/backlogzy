@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { AuthGate, useAuth } from './components/AuthGate.tsx'
+import { runMigrations } from './lib/migrations.ts'
+
+runMigrations()
 
 function Root() {
   const { authed, login } = useAuth()
