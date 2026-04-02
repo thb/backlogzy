@@ -10,6 +10,7 @@ import { exportData, importData } from "./lib/backup"
 import { itemsCollection } from "./db/collections"
 import type { Task, Status } from "./db/types"
 import { generateId, nowISO } from "./lib/utils"
+import { usePomodoros } from "./hooks/usePomodoros"
 
 type View = "board" | "planning"
 
@@ -33,6 +34,7 @@ function App() {
   } = useItems(activeProjectId)
 
   const allTasks = useAllTasks()
+  const { getCount: pomodoroCount, addPomodoro, removePomodoro } = usePomodoros()
 
   // Find detail task across all items (board) or allTasks (planning)
   const detailTask = detailItemId
@@ -205,6 +207,9 @@ function App() {
           onOpenDetail={setDetailItemId}
           onAssignTask={handleAssignTask}
           onCreateTask={handleCreateTaskOnPlanning}
+          pomodoroCount={pomodoroCount}
+          onAddPomodoro={addPomodoro}
+          onRemovePomodoro={removePomodoro}
         />
       )}
 

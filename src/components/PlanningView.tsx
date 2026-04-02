@@ -28,6 +28,9 @@ type Props = {
   onOpenDetail: (id: string) => void
   onAssignTask: (taskId: string, date: string) => void
   onCreateTask: (projectId: string, description: string, date: string) => void
+  pomodoroCount: (date: string) => number
+  onAddPomodoro: (date: string) => void
+  onRemovePomodoro: (date: string) => void
 }
 
 const columnHelper = createColumnHelper<DateRow>()
@@ -64,6 +67,9 @@ export function PlanningView({
   onOpenDetail,
   onAssignTask,
   onCreateTask,
+  pomodoroCount,
+  onAddPomodoro,
+  onRemovePomodoro,
 }: Props) {
   const [weekStart, setWeekStart] = useState(() => getMonday(new Date()))
   const { columnSizing, setColumnSizing } = useColumnSizing("planning")
@@ -111,11 +117,39 @@ export function PlanningView({
         cell: ({ row }) => {
           const d = row.original.date
           const isToday = d === toDateStr(new Date())
+          const count = pomodoroCount(d)
           return (
-            <div
-              className={`px-2 py-1 text-xs font-medium ${isToday ? "text-blue-600" : "text-gray-500"}`}
-            >
-              {formatDateShort(d)}
+            <div className={`px-2 py-1 ${isToday ? "text-blue-600" : "text-gray-500"}`}>
+              <div className="text-xs font-medium">{formatDateShort(d)}</div>
+              <div className="flex items-center gap-0.5 mt-0.5">
+                {count > 0 && (
+                  <span className="text-xs leading-none">
+                    {"🍅".repeat(Math.min(count, 10))}
+                  </span>
+                )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onAddPomodoro(d)
+                  }}
+                  className="text-[10px] text-gray-300 hover:text-red-400 cursor-pointer leading-none"
+                  title="Add pomodoro"
+                >
+                  +
+                </button>
+                {count > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onRemovePomodoro(d)
+                    }}
+                    className="text-[10px] text-gray-300 hover:text-red-400 cursor-pointer leading-none"
+                    title="Remove pomodoro"
+                  >
+                    −
+                  </button>
+                )}
+              </div>
             </div>
           )
         },
@@ -181,7 +215,7 @@ export function PlanningView({
         })
       }),
     ],
-    [visibleProjects, taskIndex, onOpenDetail, onAssignTask, onCreateTask, pickerTarget, tasks]
+    [visibleProjects, taskIndex, onOpenDetail, onAssignTask, onCreateTask, pickerTarget, tasks, pomodoroCount, onAddPomodoro, onRemovePomodoro]
   )
 
   const table = useReactTable({
