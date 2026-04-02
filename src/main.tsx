@@ -4,8 +4,10 @@ import './index.css'
 import App from './App.tsx'
 import { AuthGate, useAuth } from './components/AuthGate.tsx'
 import { runMigrations } from './lib/migrations.ts'
+import { startAutoSave } from './lib/file-sync.ts'
 
 runMigrations()
+startAutoSave()
 
 function Root() {
   const { authed, login } = useAuth()

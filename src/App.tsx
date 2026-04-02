@@ -11,6 +11,7 @@ import { itemsCollection } from "./db/collections"
 import type { Task, Status } from "./db/types"
 import { generateId, nowISO } from "./lib/utils"
 import { usePomodoros } from "./hooks/usePomodoros"
+import { FileSyncButton } from "./components/FileSyncButton"
 
 type View = "board" | "planning"
 
@@ -162,7 +163,7 @@ function App() {
         {/* Spacer */}
         {view === "planning" && <div className="flex-1" />}
 
-        {/* Export/Import */}
+        {/* Export/Import/Sync */}
         <div className="flex items-center gap-2 px-3 shrink-0">
           <button
             onClick={exportData}
@@ -185,6 +186,8 @@ function App() {
             onChange={handleImport}
             className="hidden"
           />
+          <div className="w-px h-3 bg-gray-200" />
+          <FileSyncButton />
         </div>
       </div>
 
