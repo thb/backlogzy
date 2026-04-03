@@ -27,6 +27,7 @@ function App() {
   const {
     items,
     addTask,
+    addTaskAfter,
     addSeparator,
     updateItem,
     updateTaskStatus,
@@ -207,6 +208,7 @@ function App() {
           onDeleteItem={deleteItem}
           onReorder={reorderItems}
           onAddTask={() => addTask()}
+          onAddTaskAfter={addTaskAfter}
           onAddSeparator={() => addSeparator()}
           onOpenDetail={setDetailItemId}
         />

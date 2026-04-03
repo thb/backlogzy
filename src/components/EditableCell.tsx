@@ -34,21 +34,12 @@ export function EditableCell({
     }
   }
 
-  if (!editing) {
-    return (
-      <div
-        className={`cursor-text truncate px-2 py-1 min-h-[28px] ${className}`}
-        onClick={() => setEditing(true)}
-      >
-        {value || <span className="text-gray-300">{placeholder}</span>}
-      </div>
-    )
-  }
-
   return (
     <input
       ref={inputRef}
-      value={draft}
+      value={editing ? draft : value}
+      readOnly={!editing}
+      onClick={() => !editing && setEditing(true)}
       onChange={(e) => setDraft(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => {
@@ -59,7 +50,7 @@ export function EditableCell({
         }
       }}
       placeholder={placeholder}
-      className={`w-full bg-transparent outline-none px-2 py-1 ${className}`}
+      className={`w-full bg-transparent outline-none px-2 py-1 h-[28px] cursor-text ${editing ? "" : "truncate"} ${className}`}
     />
   )
 }

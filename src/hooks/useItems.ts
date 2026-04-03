@@ -39,6 +39,30 @@ export function useItems(projectId: string | null) {
     } as Task)
   }
 
+  function addTaskAfter(afterId: string) {
+    if (!projectId) return
+    const idx = items.findIndex((i) => i.id === afterId)
+    const afterPos = idx >= 0 ? items[idx].position : Date.now()
+    const nextPos = idx >= 0 && idx + 1 < items.length ? items[idx + 1].position : afterPos + 1000
+    const newPos = afterPos + (nextPos - afterPos) / 2
+
+    itemsCollection.insert({
+      id: generateId(),
+      projectId,
+      type: "task",
+      description: "",
+      status: "TODO" as Status,
+      estimation: null,
+      timeSpent: null,
+      createdAt: nowISO(),
+      completedAt: null,
+      notes: "",
+      plannedStart: null,
+      plannedEnd: null,
+      position: newPos,
+    } as Task)
+  }
+
   function addSeparator(label = "New section") {
     if (!projectId) return
     itemsCollection.insert({
@@ -84,6 +108,7 @@ export function useItems(projectId: string | null) {
   return {
     items,
     addTask,
+    addTaskAfter,
     addSeparator,
     updateItem,
     updateTaskStatus,

@@ -12,7 +12,7 @@ export function StatusSelect({ value, onChange }: Props) {
     <select
       value={value}
       onChange={(e) => onChange(e.target.value as Status)}
-      className={`${config.bg} ${config.text} rounded-sm px-1.5 py-0.5 text-xs font-medium border-0 outline-none cursor-pointer appearance-none text-center w-full`}
+      className={`${config.bg} ${config.text} rounded-sm px-1.5 py-0.5 text-xs font-medium border-0 outline-none cursor-pointer appearance-none text-center w-full h-[28px]`}
     >
       {STATUSES.map((s) => (
         <option key={s} value={s}>

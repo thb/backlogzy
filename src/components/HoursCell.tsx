@@ -30,7 +30,7 @@ export function HoursCell({ value, onChange }: Props) {
   if (!editing) {
     return (
       <div
-        className="cursor-text px-2 py-1 text-center text-gray-600 min-h-[28px]"
+        className="cursor-text px-2 py-1 text-center text-gray-600 h-[28px] flex items-center justify-center text-xs"
         onClick={() => setEditing(true)}
       >
         {value != null ? formatDuration(value) : <span className="text-gray-300">-</span>}
@@ -53,7 +53,7 @@ export function HoursCell({ value, onChange }: Props) {
         }
       }}
       placeholder="2h, 30m, 1j"
-      className="w-full bg-transparent outline-none px-2 py-1 text-center text-sm"
+      className="w-full bg-transparent outline-none px-2 py-1 text-center text-xs h-[28px]"
     />
   )
 }

@@ -15,7 +15,7 @@ export function EditableDateCell({ value, onChange }: Props) {
         const v = e.target.value
         onChange(v || null)
       }}
-      className="w-full px-1.5 py-1 text-xs text-gray-500 bg-transparent border-none outline-none cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer relative"
+      className="w-full px-1.5 py-1 text-xs text-gray-500 bg-transparent border-none outline-none cursor-pointer h-[28px] [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer relative"
     />
   )
 }

@@ -36,6 +36,7 @@ type Props = {
   onDeleteItem: (id: string) => void
   onReorder: (orderedIds: string[]) => void
   onAddTask: () => void
+  onAddTaskAfter: (afterId: string) => void
   onAddSeparator: () => void
   onOpenDetail: (id: string) => void
 }
@@ -173,6 +174,7 @@ export function BacklogTable({
   onDeleteItem,
   onReorder,
   onAddTask,
+  onAddTaskAfter,
   onAddSeparator,
   onOpenDetail,
 }: Props) {
@@ -207,7 +209,7 @@ export function BacklogTable({
                 value={item.label}
                 onChange={(label) => onUpdateItem(item.id, { label })}
                 placeholder="Section name..."
-                className="font-semibold text-gray-700"
+                className="font-semibold text-gray-700 text-xs"
               />
             )
           }
@@ -220,7 +222,7 @@ export function BacklogTable({
                   onUpdateItem(item.id, { description })
                 }
                 placeholder="Description..."
-                className="flex-1"
+                className="flex-1 text-xs"
               />
               <button
                 onClick={(e) => {
@@ -340,16 +342,25 @@ export function BacklogTable({
       columnHelper.display({
         id: "actions",
         header: "",
-        size: 32,
+        size: 48,
         enableResizing: false,
         cell: ({ row }) => (
-          <button
-            onClick={() => setDeleteConfirmId(row.original.id)}
-            className="opacity-0 group-hover/row:opacity-100 text-gray-300 hover:text-red-500 text-sm px-1 cursor-pointer"
-            title="Delete"
-          >
-            &times;
-          </button>
+          <div className="flex items-center justify-center opacity-0 group-hover/row:opacity-100 h-[28px]">
+            <button
+              onClick={() => setDeleteConfirmId(row.original.id)}
+              className="text-gray-300 hover:text-red-500 text-sm px-0.5 cursor-pointer"
+              title="Delete"
+            >
+              &times;
+            </button>
+            <button
+              onClick={() => onAddTaskAfter(row.original.id)}
+              className="text-gray-300 hover:text-blue-500 text-sm px-0.5 cursor-pointer"
+              title="Add task below"
+            >
+              +
+            </button>
+          </div>
         ),
       }),
     ],
