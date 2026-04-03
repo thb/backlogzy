@@ -300,6 +300,21 @@ export function PlanningView({
     return idx
   }, [dates, projects, tasks])
 
+  // Sum estimations per date across all projects
+  const estimByDate = useMemo(() => {
+    const sums: Record<string, number> = {}
+    for (const d of dates) {
+      let total = 0
+      for (const p of projects) {
+        for (const t of (taskIndex[d]?.[p.id] ?? [])) {
+          if (t.estimation != null) total += t.estimation
+        }
+      }
+      sums[d] = total
+    }
+    return sums
+  }, [dates, projects, taskIndex])
+
   const visibleProjects = projects
 
   function handleDragStart(event: DragStartEvent) {
@@ -334,9 +349,15 @@ export function PlanningView({
           const d = row.original.date
           const isToday = d === toDateStr(new Date())
           const count = pomodoroCount(d)
+          const dayEstim = estimByDate[d] ?? 0
           return (
             <div className={`px-2 py-1 ${isToday ? "text-blue-600" : "text-gray-500"}`}>
-              <div className="text-xs font-medium">{formatDateShort(d)}</div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xs font-medium">{formatDateShort(d)}</span>
+                {dayEstim > 0 && (
+                  <span className="text-[10px] text-gray-400 font-normal">{formatDuration(dayEstim)}</span>
+                )}
+              </div>
               <div className="flex items-center gap-0.5 mt-0.5">
                 {count > 0 && (
                   <span className="text-xs leading-none">
@@ -409,7 +430,7 @@ export function PlanningView({
         })
       }),
     ],
-    [visibleProjects, taskIndex, onOpenDetail, onAssignTask, onCreateTask, pickerTarget, tasks, pomodoroCount, onAddPomodoro, onRemovePomodoro, getHabits, onToggleHabit]
+    [visibleProjects, taskIndex, estimByDate, onOpenDetail, onAssignTask, onCreateTask, pickerTarget, tasks, pomodoroCount, onAddPomodoro, onRemovePomodoro, getHabits, onToggleHabit]
   )
 
   const table = useReactTable({
