@@ -6,12 +6,12 @@ import { DetailPanel } from "./components/DetailPanel"
 import { useProjects } from "./hooks/useProjects"
 import { useItems } from "./hooks/useItems"
 import { useAllTasks } from "./hooks/useAllItems"
-import { exportData, importData } from "./lib/backup"
+import { importData } from "./lib/backup"
 import { itemsCollection } from "./db/collections"
 import type { Task, Status } from "./db/types"
 import { generateId, nowISO, toDateStr } from "./lib/utils"
 import { usePomodoros } from "./hooks/usePomodoros"
-import { FileSyncButton } from "./components/FileSyncButton"
+import { SettingsMenu } from "./components/SettingsMenu"
 import { useHabits } from "./hooks/useHabits"
 
 type View = "board" | "planning"
@@ -185,22 +185,9 @@ function App() {
         {/* Spacer */}
         {view === "planning" && <div className="flex-1" />}
 
-        {/* Export/Import/Sync */}
-        <div className="flex items-center gap-2 px-3 shrink-0">
-          <button
-            onClick={exportData}
-            className="text-xs text-gray-400 hover:text-gray-600 cursor-pointer"
-            title="Export backup"
-          >
-            Export
-          </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="text-xs text-gray-400 hover:text-gray-600 cursor-pointer"
-            title="Import backup"
-          >
-            Import
-          </button>
+        {/* Settings */}
+        <div className="flex items-center px-3 shrink-0">
+          <SettingsMenu onImportClick={() => fileInputRef.current?.click()} />
           <input
             ref={fileInputRef}
             type="file"
@@ -208,8 +195,6 @@ function App() {
             onChange={handleImport}
             className="hidden"
           />
-          <div className="w-px h-3 bg-gray-200" />
-          <FileSyncButton />
         </div>
       </div>
 
