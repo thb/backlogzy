@@ -300,9 +300,15 @@ export function BacklogTable({
           return (
             <EditableDateCell
               value={item.plannedStart}
-              onChange={(plannedStart) =>
-                onUpdateItem(item.id, { plannedStart })
-              }
+              onChange={(plannedStart) => {
+                const changes: Partial<typeof item> = { plannedStart }
+                if (plannedStart) {
+                  if (!item.plannedEnd || item.plannedEnd < plannedStart) {
+                    changes.plannedEnd = plannedStart
+                  }
+                }
+                onUpdateItem(item.id, changes)
+              }}
             />
           )
         },
@@ -317,9 +323,16 @@ export function BacklogTable({
           return (
             <EditableDateCell
               value={item.plannedEnd}
-              onChange={(plannedEnd) =>
-                onUpdateItem(item.id, { plannedEnd })
-              }
+              onChange={(plannedEnd) => {
+                const start = item.plannedStart
+                if (!plannedEnd && start) {
+                  onUpdateItem(item.id, { plannedEnd: start })
+                } else if (plannedEnd && start && plannedEnd < start) {
+                  onUpdateItem(item.id, { plannedEnd: start })
+                } else {
+                  onUpdateItem(item.id, { plannedEnd })
+                }
+              }}
             />
           )
         },
