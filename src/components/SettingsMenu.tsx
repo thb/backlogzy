@@ -49,8 +49,8 @@ export function SettingsMenu({ onImportClick }: Props) {
     }
   }
 
-  function handleFileDisconnect() {
-    disconnectFile()
+  async function handleFileDisconnect() {
+    await disconnectFile()
     setFileConnected(false)
   }
 

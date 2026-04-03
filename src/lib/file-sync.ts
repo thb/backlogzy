@@ -1,9 +1,11 @@
 /**
  * File System Access API wrapper for local file persistence.
- * Reads/writes a single JSON file containing all app data.
+ * Persists the file handle in IndexedDB so it survives page reloads.
  */
 
-const HANDLE_KEY = "backlogzy-file-connected"
+const IDB_NAME = "backlogzy-filesync"
+const IDB_STORE = "handles"
+const IDB_KEY = "current"
 
 // Storage keys to sync
 const SYNC_KEYS = [
@@ -21,6 +23,52 @@ type FileData = {
 
 let fileHandle: FileSystemFileHandle | null = null
 
+// --- IndexedDB helpers ---
+
+function openDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1)
+    req.onupgradeneeded = () => {
+      req.result.createObjectStore(IDB_STORE)
+    }
+    req.onsuccess = () => resolve(req.result)
+    req.onerror = () => reject(req.error)
+  })
+}
+
+async function storeHandle(handle: FileSystemFileHandle | null) {
+  const db = await openDB()
+  const tx = db.transaction(IDB_STORE, "readwrite")
+  if (handle) {
+    tx.objectStore(IDB_STORE).put(handle, IDB_KEY)
+  } else {
+    tx.objectStore(IDB_STORE).delete(IDB_KEY)
+  }
+  db.close()
+}
+
+async function loadHandle(): Promise<FileSystemFileHandle | null> {
+  try {
+    const db = await openDB()
+    return new Promise((resolve) => {
+      const tx = db.transaction(IDB_STORE, "readonly")
+      const req = tx.objectStore(IDB_STORE).get(IDB_KEY)
+      req.onsuccess = () => {
+        db.close()
+        resolve(req.result ?? null)
+      }
+      req.onerror = () => {
+        db.close()
+        resolve(null)
+      }
+    })
+  } catch {
+    return null
+  }
+}
+
+// --- Public API ---
+
 /** Check if File System Access API is available */
 export function isFileApiSupported(): boolean {
   return "showOpenFilePicker" in window
@@ -36,6 +84,36 @@ export function getFileName(): string | null {
   return fileHandle?.name ?? null
 }
 
+/**
+ * Restore file handle from IndexedDB on app startup.
+ * Returns true if a handle was restored and data loaded.
+ */
+export async function restoreFileHandle(): Promise<boolean> {
+  const handle = await loadHandle()
+  if (!handle) return false
+
+  // Re-verify permission (browser may prompt the user)
+  try {
+    const perm = await handle.queryPermission({ mode: "readwrite" })
+    if (perm === "granted") {
+      fileHandle = handle
+      return true
+    }
+    // Try requesting permission
+    const req = await handle.requestPermission({ mode: "readwrite" })
+    if (req === "granted") {
+      fileHandle = handle
+      return true
+    }
+  } catch {
+    // Permission denied or handle invalid
+  }
+
+  // Clean up stale handle
+  await storeHandle(null)
+  return false
+}
+
 /** Pick an existing file or create a new one */
 export async function connectFile(): Promise<boolean> {
   try {
@@ -49,7 +127,7 @@ export async function connectFile(): Promise<boolean> {
       startIn: "documents",
     })
     fileHandle = handle
-    sessionStorage.setItem(HANDLE_KEY, "1")
+    await storeHandle(handle)
     return true
   } catch {
     // User cancelled
@@ -71,7 +149,7 @@ export async function createFile(): Promise<boolean> {
       startIn: "documents",
     })
     fileHandle = handle
-    sessionStorage.setItem(HANDLE_KEY, "1")
+    await storeHandle(handle)
     // Write current data to file immediately
     await saveToFile()
     return true
@@ -81,9 +159,9 @@ export async function createFile(): Promise<boolean> {
 }
 
 /** Disconnect from file (go back to localStorage only) */
-export function disconnectFile() {
+export async function disconnectFile() {
   fileHandle = null
-  sessionStorage.removeItem(HANDLE_KEY)
+  await storeHandle(null)
 }
 
 /** Read data from file and load into localStorage */

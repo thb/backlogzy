@@ -4,10 +4,17 @@ import './index.css'
 import App from './App.tsx'
 import { AuthGate, useAuth } from './components/AuthGate.tsx'
 import { runMigrations } from './lib/migrations.ts'
-import { startAutoSave } from './lib/file-sync.ts'
+import { startAutoSave, restoreFileHandle, loadFromFile } from './lib/file-sync.ts'
 
 runMigrations()
 startAutoSave()
+
+// Restore file sync handle from IndexedDB (persists across reloads)
+restoreFileHandle().then(async (restored) => {
+  if (restored) {
+    await loadFromFile()
+  }
+})
 
 function Root() {
   const { authed, login } = useAuth()
