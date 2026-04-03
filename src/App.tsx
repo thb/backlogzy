@@ -9,7 +9,7 @@ import { useAllTasks } from "./hooks/useAllItems"
 import { exportData, importData } from "./lib/backup"
 import { itemsCollection } from "./db/collections"
 import type { Task, Status } from "./db/types"
-import { generateId, nowISO } from "./lib/utils"
+import { generateId, nowISO, toDateStr } from "./lib/utils"
 import { usePomodoros } from "./hooks/usePomodoros"
 import { FileSyncButton } from "./components/FileSyncButton"
 import { useHabits } from "./hooks/useHabits"
@@ -108,6 +108,26 @@ function App() {
       plannedEnd: date,
       position: Date.now(),
     } as Task)
+  }
+
+  function handleMoveTask(taskId: string, date: string, projectId: string) {
+    itemsCollection.update(taskId, (draft) => {
+      const t = draft as Task
+      // Shift range if multi-day, otherwise just set single day
+      if (t.plannedStart && t.plannedEnd && t.plannedEnd > t.plannedStart) {
+        const startMs = new Date(t.plannedStart).getTime()
+        const endMs = new Date(t.plannedEnd).getTime()
+        const durationMs = endMs - startMs
+        const newStartMs = new Date(date).getTime()
+        const newEnd = new Date(newStartMs + durationMs)
+        t.plannedStart = date
+        t.plannedEnd = toDateStr(newEnd)
+      } else {
+        t.plannedStart = date
+        t.plannedEnd = date
+      }
+      t.projectId = projectId
+    })
   }
 
   function handleUpdateStatusFromDetail(id: string, status: Task["status"]) {
@@ -212,6 +232,7 @@ function App() {
           onOpenDetail={setDetailItemId}
           onAssignTask={handleAssignTask}
           onCreateTask={handleCreateTaskOnPlanning}
+          onMoveTask={handleMoveTask}
           pomodoroCount={pomodoroCount}
           onAddPomodoro={addPomodoro}
           onRemovePomodoro={removePomodoro}

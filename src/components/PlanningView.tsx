@@ -5,6 +5,17 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table"
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDraggable,
+  useDroppable,
+  DragOverlay,
+  type DragStartEvent,
+  type DragEndEvent,
+} from "@dnd-kit/core"
 import type { Project, Task } from "../db/types"
 import { STATUS_CONFIG, PROJECT_COLORS } from "../db/types"
 import { formatDuration } from "../lib/duration"
@@ -29,6 +40,7 @@ type Props = {
   onOpenDetail: (id: string) => void
   onAssignTask: (taskId: string, date: string) => void
   onCreateTask: (projectId: string, description: string, date: string) => void
+  onMoveTask: (taskId: string, date: string, projectId: string) => void
   pomodoroCount: (date: string) => number
   onAddPomodoro: (date: string) => void
   onRemovePomodoro: (date: string) => void
@@ -116,25 +128,47 @@ function HabitPicker({
   )
 }
 
-function TaskChip({
+/** Static chip (used in DragOverlay + non-draggable contexts) */
+function TaskChipContent({ task }: { task: Task }) {
+  const cfg = STATUS_CONFIG[task.status]
+  return (
+    <div className="w-full text-left px-1.5 py-1 rounded text-xs flex items-start gap-1.5 min-w-0 bg-white">
+      <span className={`shrink-0 w-2.5 h-2.5 rounded-full mt-0.5 ${cfg.dot}`} />
+      <span className="flex-1 text-gray-700 break-words whitespace-normal">
+        {task.description || "Untitled"}
+      </span>
+      {task.estimation != null && (
+        <span className="shrink-0 text-gray-400 mt-0.5">{formatDuration(task.estimation)}</span>
+      )}
+    </div>
+  )
+}
+
+/** Draggable task chip */
+function DraggableTaskChip({
   task,
   onClick,
 }: {
   task: Task
   onClick: () => void
 }) {
-  const cfg = STATUS_CONFIG[task.status]
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: task.id,
+    data: { task },
+  })
+
   return (
     <button
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
       onClick={(e) => {
         e.stopPropagation()
         onClick()
       }}
-      className="w-full text-left px-1.5 py-1 rounded text-xs hover:bg-yellow-50 cursor-pointer flex items-start gap-1.5 min-w-0"
+      className={`w-full text-left px-1.5 py-1 rounded text-xs hover:bg-yellow-50 cursor-pointer flex items-start gap-1.5 min-w-0 ${isDragging ? "opacity-30" : ""}`}
     >
-      <span
-        className={`shrink-0 w-2.5 h-2.5 rounded-full mt-0.5 ${cfg.dot}`}
-      />
+      <span className={`shrink-0 w-2.5 h-2.5 rounded-full mt-0.5 ${STATUS_CONFIG[task.status].dot}`} />
       <span className="flex-1 text-gray-700 break-words whitespace-normal">
         {task.description || "Untitled"}
       </span>
@@ -145,12 +179,82 @@ function TaskChip({
   )
 }
 
+/** Droppable project cell */
+function DroppableProjectCell({
+  date,
+  projectId,
+  dayTasks,
+  isPickerOpen,
+  projectTasks,
+  onOpenDetail,
+  onOpenPicker,
+  onAssignTask,
+  onCreateTask,
+  onClosePicker,
+}: {
+  date: string
+  projectId: string
+  dayTasks: Task[]
+  isPickerOpen: boolean
+  projectTasks: Task[]
+  onOpenDetail: (id: string) => void
+  onOpenPicker: () => void
+  onAssignTask: (taskId: string, date: string) => void
+  onCreateTask: (projectId: string, desc: string, date: string) => void
+  onClosePicker: () => void
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `${date}::${projectId}`,
+    data: { date, projectId },
+  })
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`relative min-h-[28px] ${isPickerOpen ? "bg-yellow-50" : isOver ? "bg-yellow-50" : ""}`}
+    >
+      {dayTasks.length > 0 && (
+        <div className="flex flex-col gap-0.5 py-0.5">
+          {dayTasks.map((t) => (
+            <DraggableTaskChip
+              key={t.id}
+              task={t}
+              onClick={() => onOpenDetail(t.id)}
+            />
+          ))}
+        </div>
+      )}
+      {!isPickerOpen && (
+        <div
+          onClick={onOpenPicker}
+          className="min-h-[20px] cursor-pointer rounded hover:bg-yellow-50"
+        />
+      )}
+      {isPickerOpen && (
+        <TaskPicker
+          projectTasks={projectTasks}
+          onSelect={(taskId) => {
+            onAssignTask(taskId, date)
+            onClosePicker()
+          }}
+          onCreate={(desc) => {
+            onCreateTask(projectId, desc, date)
+            onClosePicker()
+          }}
+          onClose={onClosePicker}
+        />
+      )}
+    </div>
+  )
+}
+
 export function PlanningView({
   projects,
   tasks,
   onOpenDetail,
   onAssignTask,
   onCreateTask,
+  onMoveTask,
   pomodoroCount,
   onAddPomodoro,
   onRemovePomodoro,
@@ -160,6 +264,11 @@ export function PlanningView({
   const [weekStart, setWeekStart] = useState(() => getMonday(new Date()))
   const { columnSizing, setColumnSizing } = useColumnSizing("planning")
   const [pickerTarget, setPickerTarget] = useState<CellTarget>(null)
+  const [draggedTask, setDraggedTask] = useState<Task | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  )
 
   const dates = useMemo(
     () => getDaysInRange(weekStart, 7),
@@ -191,8 +300,29 @@ export function PlanningView({
     return idx
   }, [dates, projects, tasks])
 
-  // Show projects that have tasks this week, OR all projects (so we can add to empty ones)
   const visibleProjects = projects
+
+  function handleDragStart(event: DragStartEvent) {
+    const task = event.active.data.current?.task as Task | undefined
+    if (task) setDraggedTask(task)
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    setDraggedTask(null)
+    const { active, over } = event
+    if (!over) return
+
+    const task = active.data.current?.task as Task | undefined
+    if (!task) return
+
+    const dropData = over.data.current as { date: string; projectId: string } | undefined
+    if (!dropData) return
+
+    // Skip if same cell
+    if (dropData.date === task.plannedStart && dropData.projectId === task.projectId) return
+
+    onMoveTask(task.id, dropData.date, dropData.projectId)
+  }
 
   const columns = useMemo(
     () => [
@@ -257,48 +387,23 @@ export function PlanningView({
             const dayTasks = taskIndex[date]?.[project.id] ?? []
             const isPickerOpen =
               pickerTarget?.date === date && pickerTarget?.projectId === project.id
-
-            // Tasks available for this project (not already planned on this date)
             const projectTasks = tasks.filter(
               (t) => t.projectId === project.id
             )
 
             return (
-              <div
-                className={`relative min-h-[28px] ${isPickerOpen ? "bg-yellow-50" : ""}`}
-              >
-                {dayTasks.length > 0 && (
-                  <div className="flex flex-col gap-0.5 py-0.5">
-                    {dayTasks.map((t) => (
-                      <TaskChip
-                        key={t.id}
-                        task={t}
-                        onClick={() => onOpenDetail(t.id)}
-                      />
-                    ))}
-                  </div>
-                )}
-                {!isPickerOpen && (
-                  <div
-                    onClick={() => setPickerTarget({ date, projectId: project.id })}
-                    className="min-h-[20px] cursor-pointer rounded hover:bg-yellow-50"
-                  />
-                )}
-                {isPickerOpen && (
-                  <TaskPicker
-                    projectTasks={projectTasks}
-                    onSelect={(taskId) => {
-                      onAssignTask(taskId, date)
-                      setPickerTarget(null)
-                    }}
-                    onCreate={(desc) => {
-                      onCreateTask(project.id, desc, date)
-                      setPickerTarget(null)
-                    }}
-                    onClose={() => setPickerTarget(null)}
-                  />
-                )}
-              </div>
+              <DroppableProjectCell
+                date={date}
+                projectId={project.id}
+                dayTasks={dayTasks}
+                isPickerOpen={isPickerOpen}
+                projectTasks={projectTasks}
+                onOpenDetail={onOpenDetail}
+                onOpenPicker={() => setPickerTarget({ date, projectId: project.id })}
+                onAssignTask={onAssignTask}
+                onCreateTask={onCreateTask}
+                onClosePicker={() => setPickerTarget(null)}
+              />
             )
           },
         })
@@ -347,57 +452,71 @@ export function PlanningView({
 
       {/* Table */}
       <div className="flex-1 overflow-auto">
-        <table className="w-full border-collapse text-sm" style={{ tableLayout: "fixed" }}>
-          <thead className="sticky top-0 z-10">
-            <tr className="bg-gray-50">
-              {table.getHeaderGroups().map((hg) =>
-                hg.headers.map((header) => {
-                  const pastel = (header.column.columnDef.meta as any)?.pastel ?? ""
-                  return (
-                    <th
-                      key={header.id}
-                      className={`relative border border-gray-200 px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide ${pastel || "bg-gray-50"}`}
-                      style={{ width: header.getSize() }}
-                    >
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {header.column.getCanResize() && (
-                        <div
-                          onMouseDown={header.getResizeHandler()}
-                          onTouchStart={header.getResizeHandler()}
-                          className={`absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none hover:bg-blue-400 ${header.column.getIsResizing() ? "bg-blue-500" : ""}`}
-                        />
-                      )}
-                    </th>
-                  )
-                })
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row) => {
-              const isToday = row.original.date === toDateStr(new Date())
-              return (
-                <tr
-                  key={row.id}
-                  className={isToday ? "bg-blue-50/30" : ""}
-                >
-                  {row.getVisibleCells().map((cell) => {
-                    const pastel = (cell.column.columnDef.meta as any)?.pastel ?? ""
+        <DndContext
+          sensors={sensors}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <table className="w-full border-collapse text-sm" style={{ tableLayout: "fixed" }}>
+            <thead className="sticky top-0 z-10">
+              <tr className="bg-gray-50">
+                {table.getHeaderGroups().map((hg) =>
+                  hg.headers.map((header) => {
+                    const pastel = (header.column.columnDef.meta as any)?.pastel ?? ""
                     return (
-                      <td
-                        key={cell.id}
-                        className={`border border-gray-200 align-top ${pastel}`}
-                        style={{ width: cell.column.getSize() }}
+                      <th
+                        key={header.id}
+                        className={`relative border border-gray-200 px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide ${pastel || "bg-gray-50"}`}
+                        style={{ width: header.getSize() }}
                       >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.column.getCanResize() && (
+                          <div
+                            onMouseDown={header.getResizeHandler()}
+                            onTouchStart={header.getResizeHandler()}
+                            className={`absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none hover:bg-blue-400 ${header.column.getIsResizing() ? "bg-blue-500" : ""}`}
+                          />
+                        )}
+                      </th>
                     )
-                  })}
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+                  })
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row) => {
+                const isToday = row.original.date === toDateStr(new Date())
+                return (
+                  <tr
+                    key={row.id}
+                    className={isToday ? "bg-blue-50/30" : ""}
+                  >
+                    {row.getVisibleCells().map((cell) => {
+                      const pastel = (cell.column.columnDef.meta as any)?.pastel ?? ""
+                      return (
+                        <td
+                          key={cell.id}
+                          className={`border border-gray-200 align-top ${pastel}`}
+                          style={{ width: cell.column.getSize() }}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+
+          <DragOverlay dropAnimation={null}>
+            {draggedTask && (
+              <div className="opacity-80 shadow-md rounded w-48">
+                <TaskChipContent task={draggedTask} />
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
       </div>
     </div>
   )
