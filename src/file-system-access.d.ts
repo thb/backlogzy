@@ -1,7 +1,14 @@
 // File System Access API type declarations
+interface FileSystemPermissionDescriptor {
+  mode?: "read" | "readwrite"
+}
+
 interface FileSystemFileHandle {
+  name: string
   getFile(): Promise<File>
   createWritable(): Promise<FileSystemWritableFileStream>
+  queryPermission(descriptor?: FileSystemPermissionDescriptor): Promise<PermissionState>
+  requestPermission(descriptor?: FileSystemPermissionDescriptor): Promise<PermissionState>
 }
 
 interface FileSystemWritableFileStream extends WritableStream {
