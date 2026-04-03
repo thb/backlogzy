@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react"
 import {
   isFileApiSupported,
   isFileConnected,
+  getFileName,
   connectFile,
   createFile,
   disconnectFile,
@@ -107,6 +108,11 @@ export function SettingsMenu({ onImportClick }: Props) {
                   <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
                   File sync active
                 </div>
+                {getFileName() && (
+                  <div className="px-3 pb-1 text-[10px] text-gray-400 truncate">
+                    {getFileName()}
+                  </div>
+                )}
                 <button
                   onClick={handleFileOpen}
                   className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 cursor-pointer text-gray-700"

@@ -31,6 +31,11 @@ export function isFileConnected(): boolean {
   return fileHandle !== null
 }
 
+/** Get connected file name */
+export function getFileName(): string | null {
+  return fileHandle?.name ?? null
+}
+
 /** Pick an existing file or create a new one */
 export async function connectFile(): Promise<boolean> {
   try {
