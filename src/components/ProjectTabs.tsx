@@ -15,6 +15,7 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { PROJECT_COLORS, type ProjectColor } from "../db/types"
+import { ConfirmDialog } from "./ConfirmDialog"
 
 type ProjectItem = {
   id: string
@@ -69,45 +70,6 @@ function ColorPicker({
         />
       ))}
     </div>
-  )
-}
-
-function ConfirmDelete({
-  projectName,
-  onConfirm,
-  onCancel,
-}: {
-  projectName: string
-  onConfirm: () => void
-  onCancel: () => void
-}) {
-  return (
-    <>
-      <div className="fixed inset-0 bg-black/20 z-50" onClick={onCancel} />
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl border border-gray-200 p-5 z-50 w-80">
-        <h3 className="text-sm font-semibold text-gray-900 mb-2">
-          Delete project?
-        </h3>
-        <p className="text-sm text-gray-500 mb-4">
-          <strong>{projectName}</strong> and all its tasks will be permanently
-          deleted. This cannot be undone.
-        </p>
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={onCancel}
-            className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="px-3 py-1.5 text-sm text-white bg-red-500 hover:bg-red-600 rounded cursor-pointer"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-    </>
   )
 }
 
@@ -309,8 +271,9 @@ export function ProjectTabs({
 
       {/* Delete confirmation */}
       {deleteProject && (
-        <ConfirmDelete
-          projectName={deleteProject.name}
+        <ConfirmDialog
+          title="Delete project?"
+          message={`${deleteProject.name} and all its tasks will be permanently deleted. This cannot be undone.`}
           onConfirm={() => {
             onDelete(deleteProject.id)
             setDeleteConfirm(null)

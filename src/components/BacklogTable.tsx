@@ -1,4 +1,4 @@
-import { useMemo, type CSSProperties } from "react"
+import { useMemo, useState, type CSSProperties } from "react"
 import {
   createColumnHelper,
   flexRender,
@@ -27,6 +27,7 @@ import { EditableCell } from "./EditableCell"
 import { StatusSelect } from "./StatusSelect"
 import { HoursCell } from "./HoursCell"
 import { DateCell } from "./DateCell"
+import { ConfirmDialog } from "./ConfirmDialog"
 
 type Props = {
   items: Item[]
@@ -69,9 +70,11 @@ function DragHandle({
 function SortableRow({
   row,
   columns,
+  onRequestDelete,
 }: {
   row: Row<Item>
   columns: any[]
+  onRequestDelete: (id: string) => void
 }) {
   const {
     attributes,
@@ -116,10 +119,28 @@ function SortableRow({
               return (
                 <td
                   key={cell.id}
-                  colSpan={columns.length - 1}
+                  colSpan={columns.length - 2}
                   className="border border-gray-200"
                 >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              )
+            }
+            // Last cell = delete button
+            if (idx === row.getVisibleCells().length - 1) {
+              return (
+                <td
+                  key={cell.id}
+                  className="border border-gray-200"
+                  style={{ width: cell.column.getSize() }}
+                >
+                  <button
+                    onClick={() => onRequestDelete(row.original.id)}
+                    className="opacity-0 group-hover/row:opacity-100 text-gray-300 hover:text-red-500 text-sm px-1 cursor-pointer"
+                    title="Delete separator"
+                  >
+                    &times;
+                  </button>
                 </td>
               )
             }
@@ -156,6 +177,8 @@ export function BacklogTable({
   onOpenDetail,
 }: Props) {
   const { columnSizing, setColumnSizing } = useColumnSizing("board")
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const deleteItem = deleteConfirmId ? items.find((i) => i.id === deleteConfirmId) : null
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -294,7 +317,7 @@ export function BacklogTable({
         enableResizing: false,
         cell: ({ row }) => (
           <button
-            onClick={() => onDeleteItem(row.original.id)}
+            onClick={() => setDeleteConfirmId(row.original.id)}
             className="opacity-0 group-hover/row:opacity-100 text-gray-300 hover:text-red-500 text-sm px-1 cursor-pointer"
             title="Delete"
           >
@@ -366,7 +389,7 @@ export function BacklogTable({
           >
             <tbody>
               {table.getRowModel().rows.map((row) => (
-                <SortableRow key={row.id} row={row} columns={columns} />
+                <SortableRow key={row.id} row={row} columns={columns} onRequestDelete={setDeleteConfirmId} />
               ))}
             </tbody>
           </SortableContext>
@@ -387,6 +410,22 @@ export function BacklogTable({
           + Add separator
         </button>
       </div>
+
+      {deleteItem && (
+        <ConfirmDialog
+          title={deleteItem.type === "separator" ? "Delete separator?" : "Delete task?"}
+          message={
+            deleteItem.type === "separator"
+              ? `The separator "${(deleteItem as any).label || "Untitled"}" will be permanently deleted.`
+              : `The task "${(deleteItem as any).description || "Untitled"}" will be permanently deleted.`
+          }
+          onConfirm={() => {
+            onDeleteItem(deleteItem.id)
+            setDeleteConfirmId(null)
+          }}
+          onCancel={() => setDeleteConfirmId(null)}
+        />
+      )}
     </div>
   )
 }

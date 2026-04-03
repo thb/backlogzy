@@ -10,6 +10,7 @@ const SYNC_KEYS = [
   "backlogzy-projects",
   "backlogzy-items",
   "backlogzy-pomodoros",
+  "backlogzy-habits",
 ] as const
 
 type FileData = {
