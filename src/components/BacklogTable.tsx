@@ -26,7 +26,7 @@ import { useColumnSizing } from "../hooks/useColumnSizing"
 import { EditableCell } from "./EditableCell"
 import { StatusSelect } from "./StatusSelect"
 import { HoursCell } from "./HoursCell"
-import { DateCell } from "./DateCell"
+import { EditableDateCell } from "./EditableDateCell"
 import { ConfirmDialog } from "./ConfirmDialog"
 
 type Props = {
@@ -291,23 +291,37 @@ export function BacklogTable({
         },
       }),
       columnHelper.display({
-        id: "createdAt",
-        header: "Created",
-        size: 90,
+        id: "plannedStart",
+        header: "Start",
+        size: 110,
         cell: ({ row }) => {
           const item = row.original
           if (item.type === "separator") return null
-          return <DateCell value={item.createdAt} />
+          return (
+            <EditableDateCell
+              value={item.plannedStart}
+              onChange={(plannedStart) =>
+                onUpdateItem(item.id, { plannedStart })
+              }
+            />
+          )
         },
       }),
       columnHelper.display({
-        id: "completedAt",
-        header: "Done",
-        size: 90,
+        id: "plannedEnd",
+        header: "End",
+        size: 110,
         cell: ({ row }) => {
           const item = row.original
           if (item.type === "separator") return null
-          return <DateCell value={item.completedAt} />
+          return (
+            <EditableDateCell
+              value={item.plannedEnd}
+              onChange={(plannedEnd) =>
+                onUpdateItem(item.id, { plannedEnd })
+              }
+            />
+          )
         },
       }),
       columnHelper.display({
