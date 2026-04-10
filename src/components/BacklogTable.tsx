@@ -327,7 +327,9 @@ export function BacklogTable({
               value={item.plannedEnd}
               onChange={(plannedEnd) => {
                 const start = item.plannedStart
-                if (!plannedEnd && start) {
+                if (plannedEnd && !start) {
+                  onUpdateItem(item.id, { plannedStart: plannedEnd, plannedEnd })
+                } else if (!plannedEnd && start) {
                   onUpdateItem(item.id, { plannedEnd: start })
                 } else if (plannedEnd && start && plannedEnd < start) {
                   onUpdateItem(item.id, { plannedEnd: start })

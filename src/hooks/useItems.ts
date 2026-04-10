@@ -1,7 +1,7 @@
 import { useLiveQuery } from "@tanstack/react-db"
 import { itemsCollection } from "../db/collections"
 import type { Item, Task, Status } from "../db/types"
-import { generateId, nowISO } from "../lib/utils"
+import { generateId, nowISO, toDateStr } from "../lib/utils"
 
 export function useItems(projectId: string | null) {
   // Subscribe to the full collection reactively
@@ -82,9 +82,15 @@ export function useItems(projectId: string | null) {
 
   function updateTaskStatus(id: string, status: Status) {
     itemsCollection.update(id, (draft) => {
-      ;(draft as Task).status = status
-      if ((status === "IN_QA" || status === "IN_PROD") && !(draft as Task).completedAt) {
-        ;(draft as Task).completedAt = nowISO()
+      const t = draft as Task
+      t.status = status
+      if ((status === "IN_QA" || status === "IN_PROD") && !t.completedAt) {
+        t.completedAt = nowISO()
+      }
+      if (status === "IN_DEV" && !t.plannedStart) {
+        const today = toDateStr(new Date())
+        t.plannedStart = today
+        if (!t.plannedEnd) t.plannedEnd = today
       }
     })
   }

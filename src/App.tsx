@@ -133,9 +133,15 @@ function App() {
 
   function handleUpdateStatusFromDetail(id: string, status: Task["status"]) {
     itemsCollection.update(id, (draft) => {
-      ;(draft as Task).status = status
-      if ((status === "IN_QA" || status === "IN_PROD") && !(draft as Task).completedAt) {
-        ;(draft as Task).completedAt = new Date().toISOString()
+      const t = draft as Task
+      t.status = status
+      if ((status === "IN_QA" || status === "IN_PROD") && !t.completedAt) {
+        t.completedAt = new Date().toISOString()
+      }
+      if (status === "IN_DEV" && !t.plannedStart) {
+        const today = toDateStr(new Date())
+        t.plannedStart = today
+        if (!t.plannedEnd) t.plannedEnd = today
       }
     })
   }
