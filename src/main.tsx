@@ -1,10 +1,17 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { registerSW } from 'virtual:pwa-register'
 import './index.css'
 import App from './App.tsx'
 import { AuthGate, useAuth } from './components/AuthGate.tsx'
 import { runMigrations } from './lib/migrations.ts'
 import { startAutoSave, restoreFileHandle, loadFromFile } from './lib/file-sync.ts'
+
+registerSW({
+  onNeedRefresh() {
+    window.location.reload()
+  },
+})
 
 runMigrations()
 startAutoSave()
