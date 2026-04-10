@@ -32,15 +32,15 @@ import {
 
 type DateRow = { date: string }
 
-type CellTarget = { date: string; projectId: string } | null
+type CellTarget = { date: string; project_id: string } | null
 
 type Props = {
   projects: Project[]
   tasks: Task[]
   onOpenDetail: (id: string) => void
   onAssignTask: (taskId: string, date: string) => void
-  onCreateTask: (projectId: string, description: string, date: string) => void
-  onMoveTask: (taskId: string, date: string, projectId: string) => void
+  onCreateTask: (project_id: string, description: string, date: string) => void
+  onMoveTask: (taskId: string, date: string, project_id: string) => void
   pomodoroCount: (date: string) => number
   onAddPomodoro: (date: string) => void
   onRemovePomodoro: (date: string) => void
@@ -182,7 +182,7 @@ function DraggableTaskChip({
 /** Droppable project cell */
 function DroppableProjectCell({
   date,
-  projectId,
+  project_id,
   dayTasks,
   isPickerOpen,
   projectTasks,
@@ -193,19 +193,19 @@ function DroppableProjectCell({
   onClosePicker,
 }: {
   date: string
-  projectId: string
+  project_id: string
   dayTasks: Task[]
   isPickerOpen: boolean
   projectTasks: Task[]
   onOpenDetail: (id: string) => void
   onOpenPicker: () => void
   onAssignTask: (taskId: string, date: string) => void
-  onCreateTask: (projectId: string, desc: string, date: string) => void
+  onCreateTask: (project_id: string, desc: string, date: string) => void
   onClosePicker: () => void
 }) {
   const { setNodeRef, isOver } = useDroppable({
-    id: `${date}::${projectId}`,
-    data: { date, projectId },
+    id: `${date}::${project_id}`,
+    data: { date, project_id },
   })
 
   return (
@@ -238,7 +238,7 @@ function DroppableProjectCell({
             onClosePicker()
           }}
           onCreate={(desc) => {
-            onCreateTask(projectId, desc, date)
+            onCreateTask(project_id, desc, date)
             onClosePicker()
           }}
           onClose={onClosePicker}
@@ -288,12 +288,12 @@ export function PlanningView({
       for (const p of projects) idx[d][p.id] = []
     }
     for (const t of tasks) {
-      if (!t.plannedStart) continue
-      const start = t.plannedStart
-      const end = t.plannedEnd ?? t.plannedStart
+      if (!t.planned_start) continue
+      const start = t.planned_start
+      const end = t.planned_end ?? t.planned_start
       for (const d of dates) {
         if (d >= start && d <= end) {
-          idx[d]?.[t.projectId]?.push(t)
+          idx[d]?.[t.project_id]?.push(t)
         }
       }
     }
@@ -330,13 +330,13 @@ export function PlanningView({
     const task = active.data.current?.task as Task | undefined
     if (!task) return
 
-    const dropData = over.data.current as { date: string; projectId: string } | undefined
+    const dropData = over.data.current as { date: string; project_id: string } | undefined
     if (!dropData) return
 
     // Skip if same cell
-    if (dropData.date === task.plannedStart && dropData.projectId === task.projectId) return
+    if (dropData.date === task.planned_start && dropData.project_id === task.project_id) return
 
-    onMoveTask(task.id, dropData.date, dropData.projectId)
+    onMoveTask(task.id, dropData.date, dropData.project_id)
   }
 
   const columns = useMemo(
@@ -402,25 +402,25 @@ export function PlanningView({
           id: project.id,
           header: project.name,
           size: 200,
-          meta: { pastel: colorCfg.pastel, projectId: project.id },
+          meta: { pastel: colorCfg.pastel, project_id: project.id },
           cell: ({ row }) => {
             const date = row.original.date
             const dayTasks = taskIndex[date]?.[project.id] ?? []
             const isPickerOpen =
-              pickerTarget?.date === date && pickerTarget?.projectId === project.id
+              pickerTarget?.date === date && pickerTarget?.project_id === project.id
             const projectTasks = tasks.filter(
-              (t) => t.projectId === project.id
+              (t) => t.project_id === project.id
             )
 
             return (
               <DroppableProjectCell
                 date={date}
-                projectId={project.id}
+                project_id={project.id}
                 dayTasks={dayTasks}
                 isPickerOpen={isPickerOpen}
                 projectTasks={projectTasks}
                 onOpenDetail={onOpenDetail}
-                onOpenPicker={() => setPickerTarget({ date, projectId: project.id })}
+                onOpenPicker={() => setPickerTarget({ date, project_id: project.id })}
                 onAssignTask={onAssignTask}
                 onCreateTask={onCreateTask}
                 onClosePicker={() => setPickerTarget(null)}

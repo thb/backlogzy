@@ -47,28 +47,28 @@ export type Project = {
   name: string
   color: ProjectColor
   position: number
-  createdAt: string
+  created_at: string
 }
 
 export type Task = {
   id: string
-  projectId: string
+  project_id: string
   type: "task"
   description: string
   status: Status
   estimation: number | null
-  timeSpent: number | null
-  createdAt: string
-  completedAt: string | null
+  time_spent: number | null
+  created_at: string
+  completed_at: string | null
   notes: string
-  plannedStart: string | null // "2026-04-01" date-only
-  plannedEnd: string | null   // "2026-04-03" date-only
+  planned_start: string | null // "2026-04-01" date-only
+  planned_end: string | null   // "2026-04-03" date-only
   position: number
 }
 
 export type Separator = {
   id: string
-  projectId: string
+  project_id: string
   type: "separator"
   label: string
   position: number

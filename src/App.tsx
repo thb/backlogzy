@@ -86,48 +86,48 @@ function App() {
   function handleAssignTask(taskId: string, date: string) {
     itemsCollection.update(taskId, (draft) => {
       const t = draft as Task
-      t.plannedStart = date
-      if (!t.plannedEnd || t.plannedEnd < date) {
-        t.plannedEnd = date
+      t.planned_start = date
+      if (!t.planned_end || t.planned_end < date) {
+        t.planned_end = date
       }
     })
   }
 
-  function handleCreateTaskOnPlanning(projectId: string, description: string, date: string) {
+  function handleCreateTaskOnPlanning(project_id: string, description: string, date: string) {
     itemsCollection.insert({
       id: generateId(),
-      projectId,
+      project_id,
       type: "task",
       description,
       status: "TODO" as Status,
       estimation: null,
-      timeSpent: null,
-      createdAt: nowISO(),
-      completedAt: null,
+      time_spent: null,
+      created_at: nowISO(),
+      completed_at: null,
       notes: "",
-      plannedStart: date,
-      plannedEnd: date,
+      planned_start: date,
+      planned_end: date,
       position: Date.now(),
     } as Task)
   }
 
-  function handleMoveTask(taskId: string, date: string, projectId: string) {
+  function handleMoveTask(taskId: string, date: string, project_id: string) {
     itemsCollection.update(taskId, (draft) => {
       const t = draft as Task
       // Shift range if multi-day, otherwise just set single day
-      if (t.plannedStart && t.plannedEnd && t.plannedEnd > t.plannedStart) {
-        const startMs = new Date(t.plannedStart).getTime()
-        const endMs = new Date(t.plannedEnd).getTime()
+      if (t.planned_start && t.planned_end && t.planned_end > t.planned_start) {
+        const startMs = new Date(t.planned_start).getTime()
+        const endMs = new Date(t.planned_end).getTime()
         const durationMs = endMs - startMs
         const newStartMs = new Date(date).getTime()
         const newEnd = new Date(newStartMs + durationMs)
-        t.plannedStart = date
-        t.plannedEnd = toDateStr(newEnd)
+        t.planned_start = date
+        t.planned_end = toDateStr(newEnd)
       } else {
-        t.plannedStart = date
-        t.plannedEnd = date
+        t.planned_start = date
+        t.planned_end = date
       }
-      t.projectId = projectId
+      t.project_id = project_id
     })
   }
 
@@ -135,13 +135,13 @@ function App() {
     itemsCollection.update(id, (draft) => {
       const t = draft as Task
       t.status = status
-      if ((status === "IN_QA" || status === "IN_PROD") && !t.completedAt) {
-        t.completedAt = new Date().toISOString()
+      if ((status === "IN_QA" || status === "IN_PROD") && !t.completed_at) {
+        t.completed_at = new Date().toISOString()
       }
-      if (status === "IN_DEV" && !t.plannedStart) {
+      if (status === "IN_DEV" && !t.planned_start) {
         const today = toDateStr(new Date())
-        t.plannedStart = today
-        if (!t.plannedEnd) t.plannedEnd = today
+        t.planned_start = today
+        if (!t.planned_end) t.planned_end = today
       }
     })
   }

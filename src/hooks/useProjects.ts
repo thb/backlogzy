@@ -20,7 +20,7 @@ export function useProjects() {
       name,
       color: "gray" as ProjectColor,
       position: maxPos + 1,
-      createdAt: nowISO(),
+      created_at: nowISO(),
     })
   }
 

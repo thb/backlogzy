@@ -15,7 +15,7 @@ function markApplied(name: string) {
 }
 
 /**
- * Migrate estimation/timeSpent from hours to minutes.
+ * Migrate estimation/time_spent from hours to minutes.
  * Old format: 2 = 2 hours. New format: 120 = 120 minutes.
  */
 function migrateHoursToMinutes() {
@@ -43,9 +43,9 @@ function migrateHoursToMinutes() {
           changed = true
         }
       }
-      if (item.timeSpent != null && item.timeSpent > 0) {
-        if (item.timeSpent <= 100) {
-          item.timeSpent = Math.round(item.timeSpent * 60)
+      if (item.time_spent != null && item.time_spent > 0) {
+        if (item.time_spent <= 100) {
+          item.time_spent = Math.round(item.time_spent * 60)
           changed = true
         }
       }
@@ -60,7 +60,51 @@ function migrateHoursToMinutes() {
   markApplied(name)
 }
 
+/** Rename camelCase data keys to snake_case for Rails backend compatibility. */
+function migrateCamelToSnake() {
+  const name = "camel-to-snake-v1"
+  if (getApplied().has(name)) return
+
+  const KEY_MAP: Record<string, string> = {
+    projectId: "project_id",
+    createdAt: "created_at",
+    completedAt: "completed_at",
+    timeSpent: "time_spent",
+    plannedStart: "planned_start",
+    plannedEnd: "planned_end",
+  }
+
+  for (const storageKey of ["backlogzy-items", "backlogzy-projects"]) {
+    const raw = localStorage.getItem(storageKey)
+    if (!raw) continue
+
+    try {
+      const data = JSON.parse(raw)
+      let changed = false
+      for (const key of Object.keys(data)) {
+        const item = data[key]?.data
+        if (!item) continue
+        for (const [oldKey, newKey] of Object.entries(KEY_MAP)) {
+          if (oldKey in item) {
+            item[newKey] = item[oldKey]
+            delete item[oldKey]
+            changed = true
+          }
+        }
+      }
+      if (changed) {
+        localStorage.setItem(storageKey, JSON.stringify(data))
+      }
+    } catch {
+      // Skip on parse error
+    }
+  }
+
+  markApplied(name)
+}
+
 /** Run all pending migrations. Call before React renders. */
 export function runMigrations() {
+  migrateCamelToSnake()
   migrateHoursToMinutes()
 }

@@ -126,9 +126,9 @@ export function DetailPanel({ task, onUpdate, onUpdateStatus, onClose }: Props) 
               <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Spent</label>
               <input
                 type="text"
-                defaultValue={task.timeSpent != null ? formatDuration(task.timeSpent) : ""}
+                defaultValue={task.time_spent != null ? formatDuration(task.time_spent) : ""}
                 onBlur={(e) => {
-                  onUpdate(task.id, { timeSpent: parseDuration(e.target.value) })
+                  onUpdate(task.id, { time_spent: parseDuration(e.target.value) })
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") (e.target as HTMLInputElement).blur()
@@ -142,15 +142,15 @@ export function DetailPanel({ task, onUpdate, onUpdateStatus, onClose }: Props) 
               <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Planned start</label>
               <input
                 type="date"
-                value={task.plannedStart ?? ""}
+                value={task.planned_start ?? ""}
                 onChange={(e) => {
                   const val = e.target.value || null
                   onUpdate(task.id, {
-                    plannedStart: val,
-                    plannedEnd:
-                      val && (!task.plannedEnd || task.plannedEnd < val)
+                    planned_start: val,
+                    planned_end:
+                      val && (!task.planned_end || task.planned_end < val)
                         ? val
-                        : task.plannedEnd,
+                        : task.planned_end,
                   })
                 }}
                 className="w-full text-sm text-gray-700 border border-gray-200 rounded px-2 py-1 outline-none focus:border-gray-300"
@@ -161,10 +161,10 @@ export function DetailPanel({ task, onUpdate, onUpdateStatus, onClose }: Props) 
               <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Planned end</label>
               <input
                 type="date"
-                value={task.plannedEnd ?? ""}
-                min={task.plannedStart ?? undefined}
+                value={task.planned_end ?? ""}
+                min={task.planned_start ?? undefined}
                 onChange={(e) => {
-                  onUpdate(task.id, { plannedEnd: e.target.value || null })
+                  onUpdate(task.id, { planned_end: e.target.value || null })
                 }}
                 className="w-full text-sm text-gray-700 border border-gray-200 rounded px-2 py-1 outline-none focus:border-gray-300"
               />
@@ -174,9 +174,9 @@ export function DetailPanel({ task, onUpdate, onUpdateStatus, onClose }: Props) 
               <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Done</label>
               <input
                 type="date"
-                value={task.completedAt ? task.completedAt.slice(0, 10) : ""}
+                value={task.completed_at ? task.completed_at.slice(0, 10) : ""}
                 onChange={(e) => {
-                  onUpdate(task.id, { completedAt: e.target.value ? new Date(e.target.value).toISOString() : null })
+                  onUpdate(task.id, { completed_at: e.target.value ? new Date(e.target.value).toISOString() : null })
                 }}
                 className="w-full text-sm text-gray-700 border border-gray-200 rounded px-2 py-1 outline-none focus:border-gray-300"
               />
@@ -198,7 +198,7 @@ export function DetailPanel({ task, onUpdate, onUpdateStatus, onClose }: Props) 
           {/* Created */}
           <div className="shrink-0 pt-2 border-t border-gray-100">
             <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Created</label>
-            <span className="text-xs text-gray-500">{formatDate(task.createdAt)}</span>
+            <span className="text-xs text-gray-500">{formatDate(task.created_at)}</span>
           </div>
         </div>
       </div>

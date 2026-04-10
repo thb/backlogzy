@@ -276,7 +276,7 @@ export function BacklogTable({
         },
       }),
       columnHelper.display({
-        id: "timeSpent",
+        id: "time_spent",
         header: "Spent",
         size: 70,
         cell: ({ row }) => {
@@ -284,16 +284,16 @@ export function BacklogTable({
           if (item.type === "separator") return null
           return (
             <HoursCell
-              value={item.timeSpent}
-              onChange={(timeSpent) =>
-                onUpdateItem(item.id, { timeSpent })
+              value={item.time_spent}
+              onChange={(time_spent) =>
+                onUpdateItem(item.id, { time_spent })
               }
             />
           )
         },
       }),
       columnHelper.display({
-        id: "plannedStart",
+        id: "planned_start",
         header: "Start",
         size: 110,
         cell: ({ row }) => {
@@ -301,12 +301,12 @@ export function BacklogTable({
           if (item.type === "separator") return null
           return (
             <EditableDateCell
-              value={item.plannedStart}
-              onChange={(plannedStart) => {
-                const changes: Partial<typeof item> = { plannedStart }
-                if (plannedStart) {
-                  if (!item.plannedEnd || item.plannedEnd < plannedStart) {
-                    changes.plannedEnd = plannedStart
+              value={item.planned_start}
+              onChange={(planned_start) => {
+                const changes: Partial<typeof item> = { planned_start }
+                if (planned_start) {
+                  if (!item.planned_end || item.planned_end < planned_start) {
+                    changes.planned_end = planned_start
                   }
                 }
                 onUpdateItem(item.id, changes)
@@ -316,7 +316,7 @@ export function BacklogTable({
         },
       }),
       columnHelper.display({
-        id: "plannedEnd",
+        id: "planned_end",
         header: "End",
         size: 110,
         cell: ({ row }) => {
@@ -324,17 +324,17 @@ export function BacklogTable({
           if (item.type === "separator") return null
           return (
             <EditableDateCell
-              value={item.plannedEnd}
-              onChange={(plannedEnd) => {
-                const start = item.plannedStart
-                if (plannedEnd && !start) {
-                  onUpdateItem(item.id, { plannedStart: plannedEnd, plannedEnd })
-                } else if (!plannedEnd && start) {
-                  onUpdateItem(item.id, { plannedEnd: start })
-                } else if (plannedEnd && start && plannedEnd < start) {
-                  onUpdateItem(item.id, { plannedEnd: start })
+              value={item.planned_end}
+              onChange={(planned_end) => {
+                const start = item.planned_start
+                if (planned_end && !start) {
+                  onUpdateItem(item.id, { planned_start: planned_end, planned_end })
+                } else if (!planned_end && start) {
+                  onUpdateItem(item.id, { planned_end: start })
+                } else if (planned_end && start && planned_end < start) {
+                  onUpdateItem(item.id, { planned_end: start })
                 } else {
-                  onUpdateItem(item.id, { plannedEnd })
+                  onUpdateItem(item.id, { planned_end })
                 }
               }}
             />
