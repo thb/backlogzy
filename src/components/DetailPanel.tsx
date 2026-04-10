@@ -74,9 +74,9 @@ export function DetailPanel({ task, onUpdate, onUpdateStatus, onClose }: Props) 
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+        <div className="flex-1 flex flex-col overflow-hidden px-5 py-4">
           {/* Description */}
-          <div>
+          <div className="shrink-0 mb-4">
             <input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -90,7 +90,7 @@ export function DetailPanel({ task, onUpdate, onUpdateStatus, onClose }: Props) 
           </div>
 
           {/* Metadata */}
-          <div className="grid grid-cols-3 gap-3 text-sm">
+          <div className="shrink-0 grid grid-cols-3 gap-3 text-sm mb-4">
             <div>
               <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Status</label>
               <select
@@ -147,7 +147,6 @@ export function DetailPanel({ task, onUpdate, onUpdateStatus, onClose }: Props) 
                   const val = e.target.value || null
                   onUpdate(task.id, {
                     plannedStart: val,
-                    // Auto-set end = start if end is empty or before new start
                     plannedEnd:
                       val && (!task.plannedEnd || task.plannedEnd < val)
                         ? val
@@ -184,21 +183,22 @@ export function DetailPanel({ task, onUpdate, onUpdateStatus, onClose }: Props) 
             </div>
           </div>
 
-          {/* Notes */}
-          <div className="flex-1">
-            <label className="text-xs text-gray-400 uppercase tracking-wide block mb-2">Notes</label>
+          {/* Notes — fills remaining space */}
+          <div className="flex-1 flex flex-col min-h-0 mb-4">
+            <label className="text-xs text-gray-400 uppercase tracking-wide block mb-2 shrink-0">Notes</label>
             <textarea
               value={notes}
               onChange={(e) => handleNotesChange(e.target.value)}
               placeholder="Add notes, details, markdown..."
-              className="w-full min-h-[200px] text-sm text-gray-700 outline-none resize-y bg-gray-50 rounded-md p-3 border border-gray-200 focus:border-gray-300 font-mono"
+              className="flex-1 w-full text-xs text-gray-700 outline-none resize-none bg-gray-50 rounded-md p-3 border border-gray-200 focus:border-gray-300 font-mono leading-relaxed"
             />
-            <p className="text-xs text-gray-300 mt-1">Markdown supported. Auto-saved.</p>
+            <p className="text-[10px] text-gray-300 mt-1 shrink-0">Markdown supported. Auto-saved.</p>
           </div>
 
-          <div>
+          {/* Created */}
+          <div className="shrink-0 pt-2 border-t border-gray-100">
             <label className="text-xs text-gray-400 uppercase tracking-wide block mb-1">Created</label>
-            <span className="text-sm text-gray-600">{formatDate(task.createdAt)}</span>
+            <span className="text-xs text-gray-500">{formatDate(task.createdAt)}</span>
           </div>
         </div>
       </div>
