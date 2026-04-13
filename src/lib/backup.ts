@@ -3,7 +3,7 @@ const ITEMS_KEY = "backlogzy-items"
 
 type BackupData = {
   version: 1
-  exportedAt: string
+  exported_at: string
   projects: Record<string, unknown>
   items: Record<string, unknown>
 }
@@ -14,7 +14,7 @@ export function exportData() {
 
   const data: BackupData = {
     version: 1,
-    exportedAt: new Date().toISOString(),
+    exported_at: new Date().toISOString(),
     projects: projects ? JSON.parse(projects) : {},
     items: items ? JSON.parse(items) : {},
   }

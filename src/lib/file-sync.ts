@@ -17,7 +17,7 @@ const SYNC_KEYS = [
 
 type FileData = {
   version: 2
-  savedAt: string
+  saved_at: string
   data: Record<string, string> // localStorage key → value
 }
 
@@ -204,7 +204,7 @@ export async function saveToFile(): Promise<boolean> {
 
     const fileData: FileData = {
       version: 2,
-      savedAt: new Date().toISOString(),
+      saved_at: new Date().toISOString(),
       data,
     }
 
