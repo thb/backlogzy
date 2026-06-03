@@ -1,4 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
-  <rect width="192" height="192" rx="32" fill="#1f2937"/>
-  <text x="96" y="106" font-family="system-ui, sans-serif" font-size="120" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">B</text>
+  <rect width="192" height="192" rx="32" fill="#fff1f0"/>
+  <!-- leaves / calyx -->
+  <g fill="#3f9142">
+    <path d="M96 50c-7-15-22-21-37-19 4 13 15 22 28 24-11-2-24 2-32 13 15 4 30-2 41-11z"/>
+    <path d="M96 50c7-15 22-21 37-19-4 13-15 22-28 24 11-2 24 2 32 13-15 4-30-2-41-11z"/>
+    <path d="M96 46c-4-11-4-23 0-32 4 9 4 21 0 32z"/>
+  </g>
+  <!-- tomato body -->
+  <circle cx="96" cy="118" r="60" fill="#e23b2e"/>
+  <!-- shading -->
+  <ellipse cx="98" cy="124" rx="52" ry="48" fill="#c0271a" opacity="0.28"/>
+  <!-- highlight -->
+  <ellipse cx="72" cy="96" rx="17" ry="11" fill="#ffffff" opacity="0.5" transform="rotate(-30 72 96)"/>
 </svg>
