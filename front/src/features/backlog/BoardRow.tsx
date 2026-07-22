@@ -36,11 +36,17 @@ export function BoardRow({
   columnCount,
   onRequestDelete,
   onAddTaskAfter,
+  isCollapsed,
+  hiddenCount,
+  onToggleCollapse,
 }: {
   row: Row<Item>;
   columnCount: number;
   onRequestDelete: (id: string) => void;
   onAddTaskAfter: (afterId: string) => void;
+  isCollapsed: boolean;
+  hiddenCount: number;
+  onToggleCollapse: (id: string) => void;
 }) {
   const {
     attributes,
@@ -88,7 +94,31 @@ export function BoardRow({
                   colSpan={columnCount - 2}
                   className="border border-gray-200"
                 >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  <div className="flex items-center">
+                    <button
+                      onClick={() => onToggleCollapse(row.original.id)}
+                      className="shrink-0 px-1.5 text-gray-400 hover:text-gray-600 cursor-pointer"
+                      title={isCollapsed ? "Expand section" : "Collapse section"}
+                    >
+                      <svg
+                        width="10"
+                        height="10"
+                        viewBox="0 0 16 16"
+                        fill="currentColor"
+                        className={`transition-transform ${isCollapsed ? "" : "rotate-90"}`}
+                      >
+                        <path d="M6 3l5 5-5 5V3z" />
+                      </svg>
+                    </button>
+                    <div className="min-w-0 flex-1">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </div>
+                    {isCollapsed && hiddenCount > 0 && (
+                      <span className="mr-2 shrink-0 rounded-full bg-gray-200 px-2 py-0.5 text-[10px] text-gray-500">
+                        {hiddenCount} task{hiddenCount > 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </div>
                 </td>
               );
             }

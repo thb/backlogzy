@@ -15,11 +15,12 @@ import {
 import {
   SortableContext,
   verticalListSortingStrategy,
-  arrayMove,
 } from "@dnd-kit/sortable";
 import type { Item, Status } from "./types";
 import type { ItemChanges } from "./itemHooks";
 import { useColumnSizing } from "./useColumnSizing";
+import { useCollapsedSections } from "./useCollapsedSections";
+import { visibleItems, sectionCounts, reorderWithHidden } from "./sectionUtils";
 import { buildBoardColumns } from "./boardColumns";
 import { BoardRow } from "./BoardRow";
 import { ConfirmDialog } from "./ConfirmDialog";
@@ -48,8 +49,12 @@ export function BacklogTable({
   onOpenDetail,
 }: Props) {
   const { columnSizing, setColumnSizing } = useColumnSizing("board");
+  const { collapsed, toggle } = useCollapsedSections();
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const deleteItem = deleteConfirmId ? items.find((i) => i.id === deleteConfirmId) : null;
+
+  const visible = useMemo(() => visibleItems(items, collapsed), [items, collapsed]);
+  const counts = useMemo(() => sectionCounts(items), [items]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -70,7 +75,7 @@ export function BacklogTable({
   );
 
   const table = useReactTable({
-    data: items,
+    data: visible,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getRowId: (row) => row.id,
@@ -83,11 +88,7 @@ export function BacklogTable({
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-
-    const oldIndex = items.findIndex((i) => i.id === active.id);
-    const newIndex = items.findIndex((i) => i.id === over.id);
-    const reordered = arrayMove(items, oldIndex, newIndex);
-    onReorder(reordered.map((i) => i.id));
+    onReorder(reorderWithHidden(items, collapsed, String(active.id), String(over.id)));
   }
 
   return (
@@ -124,7 +125,7 @@ export function BacklogTable({
             </tr>
           </thead>
           <SortableContext
-            items={items.map((i) => i.id)}
+            items={visible.map((i) => i.id)}
             strategy={verticalListSortingStrategy}
           >
             <tbody>
@@ -135,6 +136,9 @@ export function BacklogTable({
                   columnCount={columns.length}
                   onRequestDelete={setDeleteConfirmId}
                   onAddTaskAfter={onAddTaskAfter}
+                  isCollapsed={collapsed.has(row.original.id)}
+                  hiddenCount={counts.get(row.original.id) ?? 0}
+                  onToggleCollapse={toggle}
                 />
               ))}
             </tbody>
