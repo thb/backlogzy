@@ -33,7 +33,8 @@ RSpec.describe "Board", type: :feature, js: true do
     wait_for { task.reload.status == "IN_QA" }
     expect(task.completed_at).to be_present
 
-    # Delete through the confirm dialog
+    # Delete through the confirm dialog (row actions appear on hover)
+    find("input[placeholder='Description...']").hover
     find("button[title='Delete']").click
     click_button "Delete"
     expect(page).to have_no_css("input[placeholder='Description...']")
