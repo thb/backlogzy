@@ -8,6 +8,9 @@
 #     "habits"    => { "2026-04-01" => ["🧘", "📖"] },          # optional
 #     "pomodoros" => { "2026-04-01" => 3 }                      # optional
 #   }
+#
+# Records exported straight from the old app's localStorage are wrapped by
+# TanStack DB as { "versionKey" => uuid, "data" => {...} } — unwrapped here.
 class ImportBackup
   Result = Struct.new(:projects, :items, :habits, :pomodoros, keyword_init: true)
 
@@ -35,8 +38,15 @@ class ImportBackup
 
   private
 
+  def unwrap(attrs)
+    return attrs["data"] if attrs.is_a?(Hash) && attrs.key?("versionKey") && attrs["data"].is_a?(Hash)
+
+    attrs
+  end
+
   def import_projects
     (@payload["projects"] || {}).to_h do |old_id, attrs|
+      attrs = unwrap(attrs)
       project = @account.projects.create!(
         name: attrs["name"].presence || "Untitled",
         color: Project::COLORS.include?(attrs["color"]) ? attrs["color"] : "gray",
@@ -48,6 +58,7 @@ class ImportBackup
 
   def import_items(project_ids)
     (@payload["items"] || {}).count do |_old_id, attrs|
+      attrs = unwrap(attrs)
       project_id = project_ids[attrs["project_id"]]
       next false unless project_id # orphan rows in old backups are skipped
 
