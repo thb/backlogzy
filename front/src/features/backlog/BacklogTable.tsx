@@ -134,6 +134,7 @@ export function BacklogTable({
                   row={row}
                   columnCount={columns.length}
                   onRequestDelete={setDeleteConfirmId}
+                  onAddTaskAfter={onAddTaskAfter}
                 />
               ))}
             </tbody>

@@ -35,10 +35,12 @@ export function BoardRow({
   row,
   columnCount,
   onRequestDelete,
+  onAddTaskAfter,
 }: {
   row: Row<Item>;
   columnCount: number;
   onRequestDelete: (id: string) => void;
+  onAddTaskAfter: (afterId: string) => void;
 }) {
   const {
     attributes,
@@ -90,7 +92,7 @@ export function BoardRow({
                 </td>
               );
             }
-            // Last cell = delete button
+            // Last cell = row actions (delete + add task below, like task rows)
             if (idx === row.getVisibleCells().length - 1) {
               return (
                 <td
@@ -98,13 +100,22 @@ export function BoardRow({
                   className="border border-gray-200"
                   style={{ width: cell.column.getSize() }}
                 >
-                  <button
-                    onClick={() => onRequestDelete(row.original.id)}
-                    className="opacity-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100 text-gray-300 hover:text-red-500 text-sm px-1 cursor-pointer"
-                    title="Delete separator"
-                  >
-                    &times;
-                  </button>
+                  <div className="flex items-center justify-center opacity-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100">
+                    <button
+                      onClick={() => onRequestDelete(row.original.id)}
+                      className="text-gray-300 hover:text-red-500 text-sm px-0.5 cursor-pointer"
+                      title="Delete separator"
+                    >
+                      &times;
+                    </button>
+                    <button
+                      onClick={() => onAddTaskAfter(row.original.id)}
+                      className="text-gray-300 hover:text-blue-500 text-sm px-0.5 cursor-pointer"
+                      title="Add task below"
+                    >
+                      +
+                    </button>
+                  </div>
                 </td>
               );
             }
