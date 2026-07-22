@@ -29,7 +29,17 @@ export function ImportSection() {
   async function handleFile(file: File) {
     setError(null);
     try {
-      const data = JSON.parse(await file.text());
+      let data = JSON.parse(await file.text());
+      // File-sync format (v2): { version: 2, data: { "backlogzy-<key>": "<stringified JSON>" } }
+      if (data.version === 2 && data.data) {
+        const section = (key: string) => JSON.parse(data.data[`backlogzy-${key}`] ?? "{}");
+        data = {
+          projects: section("projects"),
+          items: section("items"),
+          habits: section("habits"),
+          pomodoros: section("pomodoros"),
+        };
+      }
       if (!data.projects || !data.items) throw new Error("not a backlogzy backup");
       mutation.mutate({
         projects: data.projects,
