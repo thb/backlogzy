@@ -170,7 +170,7 @@ export function buildBoardColumns(actions: BoardColumnActions) {
       size: 48,
       enableResizing: false,
       cell: ({ row }) => (
-        <div className="flex items-center justify-center opacity-0 group-hover/row:opacity-100 h-[28px]">
+        <div className="flex items-center justify-center opacity-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100 h-[28px]">
           <button
             onClick={() => onRequestDelete(row.original.id)}
             className="text-gray-300 hover:text-red-500 text-sm px-0.5 cursor-pointer"

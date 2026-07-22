@@ -100,7 +100,7 @@ export function BoardRow({
                 >
                   <button
                     onClick={() => onRequestDelete(row.original.id)}
-                    className="opacity-0 group-hover/row:opacity-100 text-gray-300 hover:text-red-500 text-sm px-1 cursor-pointer"
+                    className="opacity-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100 text-gray-300 hover:text-red-500 text-sm px-1 cursor-pointer"
                     title="Delete separator"
                   >
                     &times;
