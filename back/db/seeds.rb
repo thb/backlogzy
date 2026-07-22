@@ -1,5 +1,12 @@
 # Idempotent seeds for local development.
 # Login with admin@example.com / password on account slug "acme".
+#
+# NEVER in production: db:prepare seeds when it creates the database, and a
+# super_admin with a known password must not exist on a live SaaS.
+if Rails.env.production?
+  puts "Seeds skipped (production)."
+  return
+end
 
 account = Account.find_or_create_by!(slug: "acme") { |a| a.name = "Acme Corp" }
 
