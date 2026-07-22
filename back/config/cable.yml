@@ -1,0 +1,9 @@
+# Action Cable is not used by this API boilerplate; this keeps the config valid.
+development:
+  adapter: async
+
+test:
+  adapter: test
+
+production:
+  adapter: async

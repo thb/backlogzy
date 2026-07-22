@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend — rspec + rswag + e2e
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      RAILS_ENV: test
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          working-directory: back
+          bundler-cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: front/package-lock.json
+
+      # The Capybara feature specs build the SPA (npm run build:test), so the
+      # front dependencies must be installed for the backend job too.
+      - name: Install front dependencies
+        working-directory: front
+        run: npm ci
+
+      - name: Prepare test database
+        working-directory: back
+        run: bin/rails db:prepare
+
+      - name: Run rspec (models, requests/rswag, features)
+        working-directory: back
+        run: bundle exec rspec
+
+      - name: Check the committed OpenAPI doc is up to date
+        working-directory: back
+        run: |
+          bundle exec rake rswag:specs:swaggerize
+          git diff --exit-code swagger/ \
+            || (echo "::error::swagger/ is stale — run rake rswag:specs:swaggerize and commit" && exit 1)
+
+  frontend:
+    name: Frontend — typecheck + lint + build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: front/package-lock.json
+
+      - name: Install dependencies
+        working-directory: front
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: front
+        run: npm run typecheck
+
+      - name: Lint
+        working-directory: front
+        run: npm run lint
+
+      - name: Build
+        working-directory: front
+        run: npm run build

@@ -1,4 +1,10 @@
-name: Deploy to GitHub Pages
+name: Deploy
+
+# Push to main deploys, but ONLY when the repo opts in with the `DEPLOY_ENABLED`
+# variable set to "true". A fresh clone of this boilerplate stays green (deploy
+# jobs are skipped) until a project configures its secrets/variables — see
+# docs/DEPLOYMENT.md. The workflow itself is generic; everything project-specific
+# comes from GitHub Secrets/Variables, never committed.
 
 on:
   push:
@@ -7,36 +13,75 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
+  packages: write
 
 jobs:
-  build:
+  deploy-back:
+    name: Back — build → GHCR → SSH deploy
+    if: vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Compute image name (lowercase)
+        id: img
+        run: echo "image=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')-back" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: back
+          push: true
+          tags: |
+            ${{ steps.img.outputs.image }}:latest
+            ${{ steps.img.outputs.image }}:${{ github.sha }}
+
+      - name: SSH deploy (pull + restart on the server)
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: APP_DIR
+          script: |
+            cd ~/docker/${APP_DIR}
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
+            docker image prune -f
+        env:
+          APP_DIR: ${{ vars.DEPLOY_APP_DIR }}
+
+  deploy-front:
+    name: Front — build → Cloudflare Pages
+    # Runs only once Cloudflare is configured (CLOUDFLARE_PROJECT set), so the back
+    # can go live independently before the front.
+    if: vars.DEPLOY_ENABLED == 'true' && vars.CLOUDFLARE_PROJECT != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
-      - run: npm ci --legacy-peer-deps
-      - run: npm run build
-        env:
-          VITE_AUTH_HASH: ${{ secrets.VITE_AUTH_HASH }}
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
+          cache-dependency-path: front/package-lock.json
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Build SPA
+        working-directory: front
+        env:
+          VITE_API_URL: ${{ vars.API_URL }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy front/dist --project-name=${{ vars.CLOUDFLARE_PROJECT }}

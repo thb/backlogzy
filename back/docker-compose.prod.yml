@@ -1,0 +1,59 @@
+# Server-side production compose — lives in ~/docker/<app>/ on the deploy server.
+# NOT used in development (that's the root docker-compose.yml). The deploy workflow
+# SSHes in and runs `docker compose -f docker-compose.prod.yml pull && up -d`.
+#
+# Traefik labels follow the rdmpr server convention (external network `proxy`,
+# entrypoint `https`, certresolver `letsencrypt`). Adapt the names to your Traefik.
+#
+# Provide values via a sibling .env file (NOT committed) — see docs/DEPLOYMENT.md:
+#   IMAGE, APP, API_HOST, SECRET_KEY_BASE, DB_PASSWORD, CORS_ORIGINS
+services:
+  app:
+    image: ${IMAGE:?set IMAGE in .env, e.g. ghcr.io/thb/backlogzy-back:latest}
+    container_name: ${APP:-app}-api
+    restart: unless-stopped
+    pull_policy: always
+    depends_on:
+      db:
+        condition: service_healthy
+    # Every var from .env reaches the app (SECRET_KEY_BASE, CORS_ORIGINS, SCALEWAY_*, …).
+    env_file: .env
+    environment:
+      RAILS_ENV: production
+      RAILS_LOG_TO_STDOUT: "true"
+      DATABASE_URL: postgres://${APP:-app}:${DB_PASSWORD:?}@db:5432/${APP:-app}_production
+    networks: [internal, proxy]
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.routers.${APP:-app}.rule=Host(`${API_HOST:?}`)
+      - traefik.http.routers.${APP:-app}.entrypoints=https
+      - traefik.http.routers.${APP:-app}.tls=true
+      - traefik.http.routers.${APP:-app}.tls.certresolver=letsencrypt
+      - traefik.http.services.${APP:-app}.loadbalancer.server.port=80
+
+  db:
+    image: postgres:17-alpine
+    container_name: ${APP:-app}-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${APP:-app}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?}
+      POSTGRES_DB: ${APP:-app}_production
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${APP:-app} -d ${APP:-app}_production"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pg_data:
+
+networks:
+  internal:
+    driver: bridge
+  proxy:
+    external: true

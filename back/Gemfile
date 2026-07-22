@@ -1,0 +1,65 @@
+source "https://rubygems.org"
+
+gem "rails", "~> 8.0.5"
+gem "pg", "~> 1.5"
+gem "puma", ">= 5.0"
+
+# Auth
+gem "bcrypt", "~> 3.1.7"
+gem "jwt", "~> 2.10"
+
+# OAuth (Google, GitHub) — login only, callback issues our JWT.
+gem "omniauth", "~> 2.1"
+gem "omniauth-google-oauth2", "~> 1.1"
+gem "omniauth-github", "~> 2.0"
+
+# API
+gem "blueprinter", "~> 1.1"
+gem "has_scope", "~> 0.8"
+gem "pagy", "~> 9.3"
+gem "rack-cors", "~> 2.0"
+
+# OpenAPI docs (generated from request specs)
+gem "rswag-api", "~> 2.16"
+gem "rswag-ui", "~> 2.16"
+
+# Active Job backend — Postgres-backed, lives in the single app database (no extra DB).
+gem "good_job", "~> 4.0"
+
+# Active Storage S3 service (Scaleway in production).
+gem "aws-sdk-s3", "~> 1.180", require: false
+
+# NOTE: the Solid trio (solid_cache/queue/cable) is intentionally omitted — this API
+# boilerplate runs on a single database with in-memory cache. Background jobs use
+# good_job (above); durable cache/cable can be added deliberately if a project needs them.
+
+# Reduces boot times through caching; required in config/boot.rb
+gem "bootsnap", require: false
+
+# HTTP asset caching/compression + X-Sendfile acceleration for Puma
+gem "thruster", require: false
+
+gem "tzinfo-data", platforms: %i[ windows jruby ]
+
+group :development, :test do
+  gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
+  gem "brakeman", require: false
+  gem "rubocop-rails-omakase", require: false
+
+  gem "rspec-rails", "~> 8.0"
+  gem "rswag-specs", "~> 2.16"
+  gem "factory_bot_rails", "~> 6.4"
+  gem "faker", "~> 3.5"
+  gem "shoulda-matchers", "~> 6.4"
+  gem "database_cleaner-active_record", "~> 2.2"
+end
+
+group :test do
+  gem "capybara", "~> 3.40"
+  gem "selenium-webdriver", "~> 4.27"
+end
+
+group :development do
+  # Preview sent emails in the browser instead of delivering them.
+  gem "letter_opener", "~> 1.10"
+end
