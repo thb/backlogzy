@@ -36,12 +36,13 @@ RSpec.describe "Imports", type: :request do
 
         let(:payload) do
           {
-            # Projects in the raw TanStack DB localStorage shape ({versionKey, data});
-            # items flat — the importer must accept both.
-            projects: { "old-p1" => { versionKey: "v1", data: { name: "Zenflow", color: "teal", position: 1 } } },
+            # Projects in the raw TanStack DB localStorage shape: dict keys are
+            # storage-encoded ("s:<id>") while records reference the inner id.
+            projects: { "s:old-p1" => { versionKey: "v1", data: { id: "old-p1", name: "Zenflow", color: "teal", position: 1 } } },
             items: {
-              "old-i1" => { versionKey: "v2", data: { project_id: "old-p1", type: "task", description: "Ship MVP",
-                                                     status: "IN_DEV", position: 1, planned_start: "2026-04-01" } },
+              "s:old-i1" => { versionKey: "v2", data: { id: "old-i1", project_id: "old-p1", type: "task",
+                                                       description: "Ship MVP", status: "IN_DEV", position: 1,
+                                                       planned_start: "2026-04-01" } },
               "old-i2" => { project_id: "old-p1", type: "separator", label: "Sprint 1", position: 2 },
               "orphan" => { project_id: "gone", type: "task", description: "skip me", position: 3 }
             },

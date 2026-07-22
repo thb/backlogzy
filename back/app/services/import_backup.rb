@@ -45,14 +45,15 @@ class ImportBackup
   end
 
   def import_projects
-    (@payload["projects"] || {}).to_h do |old_id, attrs|
+    (@payload["projects"] || {}).to_h do |key, attrs|
       attrs = unwrap(attrs)
       project = @account.projects.create!(
         name: attrs["name"].presence || "Untitled",
         color: Project::COLORS.include?(attrs["color"]) ? attrs["color"] : "gray",
         position: attrs["position"].to_f
       )
-      [old_id, project.id]
+      # Items reference the record's own id; the dict key may be storage-encoded ("s:<id>").
+      [attrs["id"] || key, project.id]
     end
   end
 
