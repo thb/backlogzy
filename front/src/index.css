@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+/* Design tokens — adapt --color-primary per project brand. */
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque", "Hanken Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Marketing palette (engineered dark) */
+  --color-ink: #0a0a0b;
+  --color-acid: #c6f24e;
+
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(224 71% 4%);
+  --color-muted: hsl(220 14% 96%);
+  --color-muted-foreground: hsl(220 9% 46%);
+  --color-border: hsl(220 13% 91%);
+  --color-primary: hsl(262 83% 58%);
+  --color-primary-foreground: hsl(210 20% 98%);
+  --color-destructive: hsl(0 84% 60%);
+  --color-destructive-foreground: hsl(210 20% 98%);
+  --color-ring: hsl(262 83% 58%);
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-muted);
+  color: var(--color-foreground);
+}
+
+/* ── Detail panel entrance ───────────────────────────────────────────── */
+@keyframes slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.animate-slide-in { animation: slide-in 0.15s ease-out; }

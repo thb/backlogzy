@@ -1,0 +1,17 @@
+# Dev-only Postgres. The app itself runs on the host (rails s / npm run dev).
+# Use it if you don't have a local Postgres: `docker compose up -d`.
+# Then point Rails at it with: DATABASE_URL=postgres://postgres:postgres@localhost:5433/backlogzy_development
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: backlogzy_development
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+volumes:
+  pg_data:

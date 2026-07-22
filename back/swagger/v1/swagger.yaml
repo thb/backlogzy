@@ -1,0 +1,705 @@
+---
+openapi: 3.0.1
+info:
+  title: Backlogzy API
+  version: v1
+  description: Golden-path API. Auth = Bearer JWT, multi-tenant = X-Account header.
+paths:
+  "/v1/habit_entries":
+    get:
+      summary: List the current user's habit checks (?from=&to=)
+      tags:
+      - Habits
+      security:
+      - bearer_auth: []
+        account_header: []
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      responses:
+        '200':
+          description: only mine, only in range
+        '401':
+          description: missing token
+  "/v1/habit_entries/toggle":
+    post:
+      summary: Toggle a habit for a day
+      tags:
+      - Habits
+      security:
+      - bearer_auth: []
+        account_header: []
+      parameters: []
+      responses:
+        '200':
+          description: unchecks a habit that was already checked
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                  format: date
+                emoji:
+                  type: string
+              required:
+              - date
+              - emoji
+  "/v1/import":
+    post:
+      summary: Import a legacy localStorage backup (v1 JSON)
+      tags:
+      - Import
+      security:
+      - bearer_auth: []
+        account_header: []
+      parameters: []
+      responses:
+        '201':
+          description: everything lands in the current account with fresh ids
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      projects:
+                        type: integer
+                      items:
+                        type: integer
+                      habits:
+                        type: integer
+                      pomodoros:
+                        type: integer
+        '401':
+          description: missing token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                projects:
+                  type: object
+                  additionalProperties:
+                    type: object
+                items:
+                  type: object
+                  additionalProperties:
+                    type: object
+                habits:
+                  type: object
+                  additionalProperties:
+                    type: array
+                    items:
+                      type: string
+                pomodoros:
+                  type: object
+                  additionalProperties:
+                    type: integer
+  "/v1/items":
+    get:
+      summary: List items (?project_id= for one board, ?kind=task for planning)
+      tags:
+      - Items
+      security:
+      - bearer_auth: []
+        account_header: []
+      parameters:
+      - name: project_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: kind
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - task
+          - separator
+      responses:
+        '200':
+          description: all tasks across projects with ?kind=task
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/Item"
+        '401':
+          description: missing token
+    post:
+      summary: Create an item (task or separator)
+      tags:
+      - Items
+      security:
+      - bearer_auth: []
+        account_header: []
+      parameters: []
+      responses:
+        '201':
+          description: created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/Item"
+        '404':
+          description: rejects a project from another account
+        '422':
+          description: validation errors
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ValidationErrors"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                item:
+                  type: object
+                  properties:
+                    project_id:
+                      type: string
+                      format: uuid
+                    kind:
+                      type: string
+                    description:
+                      type: string
+                    label:
+                      type: string
+                    status:
+                      type: string
+                    position:
+                      type: number
+                    planned_start:
+                      type: string
+                      format: date
+                    planned_end:
+                      type: string
+                      format: date
+                  required:
+                  - project_id
+              required:
+              - item
+  "/v1/items/reorder":
+    post:
+      summary: Reorder a board (full ordered id list)
+      tags:
+      - Items
+      security:
+      - bearer_auth: []
+        account_header: []
+      parameters: []
+      responses:
+        '204':
+          description: positions rewritten in the given order
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+              required:
+              - ids
+  "/v1/items/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    patch:
+      summary: Update an item (inline edits, status, planning drag)
+      tags:
+      - Items
+      security:
+      - bearer_auth: []
+        account_header: []
+      parameters: []
+      responses:
+        '200':
+          description: updated — project moves stay inside the account
+        '404':
+          description: rejects a move to another account's project
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                item:
+                  type: object
+              required:
+              - item
+    delete:
+      summary: Delete an item
+      tags:
+      - Items
+      security:
+      - bearer_auth: []
+        account_header: []
+      responses:
+        '204':
+          description: deleted
+        '404':
+          description: not found in this account
+  "/v1/notifications":
+    get:
+      summary: List the current user's notifications (recent first)
+      tags:
+      - Notifications
+      security:
+      - bearer_auth: []
+        account_header: []
+      parameters:
+      - name: unread
+        in: query
+        required: false
+        schema:
+          type: boolean
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: filtered to unread only
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/Notification"
+                  meta:
+                    type: object
+                    properties:
+                      count:
+                        type: integer
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      pages:
+                        type: integer
+                      unread_count:
+                        type: integer
+        '401':
+          description: missing token
+  "/v1/notifications/{id}/read":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    patch:
+      summary: Mark a notification read
+      tags:
+      - Notifications
+      security:
+      - bearer_auth: []
+        account_header: []
+      responses:
+        '200':
+          description: marked read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/Notification"
+        '404':
+          description: another user's notification
+  "/v1/notifications/read_all":
+    post:
+      summary: Mark all the current user's notifications read
+      tags:
+      - Notifications
+      security:
+      - bearer_auth: []
+        account_header: []
+      responses:
+        '204':
+          description: all marked read
+  "/v1/pomodoros":
+    get:
+      summary: List the current user's pomodoro counts (?from=&to=)
+      tags:
+      - Pomodoros
+      security:
+      - bearer_auth: []
+        account_header: []
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      responses:
+        '200':
+          description: only mine, only in range
+        '401':
+          description: missing token
+  "/v1/pomodoros/increment":
+    post:
+      summary: Add a pomodoro to a day
+      tags:
+      - Pomodoros
+      security:
+      - bearer_auth: []
+        account_header: []
+      parameters: []
+      responses:
+        '200':
+          description: creates the row on first use, then counts up
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                  format: date
+              required:
+              - date
+  "/v1/pomodoros/decrement":
+    post:
+      summary: Remove a pomodoro from a day (row disappears at zero)
+      tags:
+      - Pomodoros
+      security:
+      - bearer_auth: []
+        account_header: []
+      parameters: []
+      responses:
+        '200':
+          description: counts down to deletion
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                  format: date
+              required:
+              - date
+  "/v1/projects":
+    get:
+      summary: List projects (board tabs, ordered by position)
+      tags:
+      - Projects
+      security:
+      - bearer_auth: []
+        account_header: []
+      responses:
+        '200':
+          description: whole collection scoped to the current account
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      "$ref": "#/components/schemas/Project"
+        '401':
+          description: missing token
+    post:
+      summary: Create a project
+      tags:
+      - Projects
+      security:
+      - bearer_auth: []
+        account_header: []
+      parameters: []
+      responses:
+        '201':
+          description: created at the end of the tab list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    "$ref": "#/components/schemas/Project"
+        '422':
+          description: validation errors
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ValidationErrors"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    color:
+                      type: string
+                    position:
+                      type: number
+                  required:
+                  - name
+              required:
+              - project
+  "/v1/projects/reorder":
+    post:
+      summary: Reorder projects (full ordered id list)
+      tags:
+      - Projects
+      security:
+      - bearer_auth: []
+        account_header: []
+      parameters: []
+      responses:
+        '204':
+          description: positions rewritten in the given order
+        '404':
+          description: rejects ids from another account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+              required:
+              - ids
+  "/v1/projects/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    patch:
+      summary: Update a project (rename, recolor)
+      tags:
+      - Projects
+      security:
+      - bearer_auth: []
+        account_header: []
+      parameters: []
+      responses:
+        '200':
+          description: updated
+        '404':
+          description: not found in this account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project:
+                  type: object
+              required:
+              - project
+    delete:
+      summary: Delete a project and its items
+      tags:
+      - Projects
+      security:
+      - bearer_auth: []
+        account_header: []
+      responses:
+        '204':
+          description: deleted
+servers:
+- url: http://localhost:3000
+  description: Local
+components:
+  securitySchemes:
+    bearer_auth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    account_header:
+      type: apiKey
+      name: X-Account
+      in: header
+  schemas:
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        color:
+          type: string
+        position:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - name
+      - color
+      - position
+    Item:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum:
+          - task
+          - separator
+        description:
+          type: string
+        label:
+          type: string
+        status:
+          type: string
+          enum:
+          - TODO
+          - IN_DESIGN
+          - IN_DEV
+          - IN_QA
+          - IN_PROD
+          - WAITING
+          - REDO
+        estimation:
+          type: number
+          nullable: true
+        time_spent:
+          type: number
+          nullable: true
+        notes:
+          type: string
+        planned_start:
+          type: string
+          format: date
+          nullable: true
+        planned_end:
+          type: string
+          format: date
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        position:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - project_id
+      - kind
+      - position
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum:
+          - member_added
+        data:
+          type: object
+          additionalProperties:
+            type: string
+        notifiable_type:
+          type: string
+          nullable: true
+        notifiable_id:
+          type: string
+          format: uuid
+          nullable: true
+        actor_name:
+          type: string
+          nullable: true
+        read:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - action
+      - read
+    ValidationErrors:
+      type: object
+      properties:
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+security:
+- bearer_auth: []
+  account_header: []

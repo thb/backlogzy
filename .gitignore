@@ -1,25 +1,17 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
-*.local
-.env
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# OS / editor
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+.idea/
+*.swp
+
+# Node / front (front has its own .gitignore too)
+node_modules/
+front/dist/
+
+# Ruby / back has its own .gitignore (log, tmp, storage, master.key…)
+
+# NOTE: front/src/routeTree.gen.ts is intentionally committed so a fresh
+# clone can typecheck/build before the Vite dev server has run once.
+
+# Secrets locaux
+.env
+.env.local

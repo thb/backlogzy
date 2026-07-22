@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Run the API (back, :3000) and the SPA (front, :5173) together.
+# Usage: ./bin/dev    — Ctrl-C stops both.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+# Use a process manager if available (reads Procfile.dev), otherwise run inline.
+if command -v overmind >/dev/null 2>&1; then
+  exec overmind start -f Procfile.dev
+elif command -v foreman >/dev/null 2>&1; then
+  exec foreman start -f Procfile.dev
+fi
+
+echo "▶ back  → http://localhost:3000   (API + /api-docs)"
+echo "▶ front → http://localhost:5173   (SPA)"
+echo "  (install foreman or overmind for prefixed, color-coded output)"
+echo
+
+pids=()
+cleanup() {
+  trap - INT TERM EXIT
+  echo; echo "Stopping…"
+  kill "${pids[@]}" 2>/dev/null || true
+  wait 2>/dev/null || true
+}
+trap cleanup INT TERM EXIT
+
+( cd back && exec bin/rails s -b 0.0.0.0 -p 3000 ) & pids+=($!)
+( cd front && exec npm run dev ) & pids+=($!)
+
+# Block until interrupted (Ctrl-C); the trap then stops both processes.
+wait
