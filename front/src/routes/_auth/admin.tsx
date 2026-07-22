@@ -1,6 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { meQueryOptions, isAdmin } from "@/lib/auth";
-import { AppLayout } from "@/components/AppLayout";
 import { InvitePanel } from "@/features/admin/InvitePanel";
 import { MembersTable } from "@/features/admin/MembersTable";
 
@@ -9,11 +8,7 @@ export const Route = createFileRoute("/_auth/admin")({
     const user = await context.queryClient.ensureQueryData(meQueryOptions);
     if (!isAdmin(user)) throw redirect({ to: "/board" });
   },
-  component: () => (
-    <AppLayout>
-      <AdminPage />
-    </AppLayout>
-  ),
+  component: AdminPage,
 });
 
 function AdminPage() {

@@ -24,6 +24,6 @@ RSpec.describe "Password reset", type: :feature, js: true do
     fill_in "password", with: "brandnewpass"
     click_button "Sign in"
 
-    expect(page).to have_link("Boards") # logged in, landed on the board
+    expect(page).to have_button("Boards") # logged in, landed on the board
   end
 end

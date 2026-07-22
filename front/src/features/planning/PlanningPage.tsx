@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { TopBar } from "@/features/backlog/TopBar";
 import { DetailPanel } from "@/features/backlog/DetailPanel";
 import { statusChangePatch } from "@/features/backlog/statusChangePatch";
 import { itemsQueryOptions, useCreateItem, useUpdateItem } from "@/features/backlog/itemHooks";
@@ -109,9 +108,7 @@ export function PlanningPage() {
   const fmtRange = `${startDate.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} — ${weekEndDate.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}`;
 
   return (
-    <div className="h-screen flex flex-col bg-white">
-      <TopBar />
-
+    <div className="flex h-[calc(100vh-3.5rem)] flex-col bg-white">
       {/* Week navigation */}
       <div className="flex items-center justify-center gap-4 px-4 py-2 border-b border-gray-200 bg-white">
         <button

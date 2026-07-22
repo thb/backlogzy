@@ -1,15 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppLayout } from "@/components/AppLayout";
 import { ProfileForm } from "@/features/settings/ProfileForm";
 import { ChangePasswordForm } from "@/features/settings/ChangePasswordForm";
 import { ImportSection } from "@/features/settings/ImportSection";
 
 export const Route = createFileRoute("/_auth/settings")({
-  component: () => (
-    <AppLayout>
-      <SettingsPage />
-    </AppLayout>
-  ),
+  component: SettingsPage,
 });
 
 function SettingsPage() {

@@ -45,7 +45,7 @@ RSpec.describe "Board", type: :feature, js: true do
 
   it "adds a separator row" do
     project = create(:project, account: account, name: "Ops")
-    expect(page).to have_link("Boards") # login has landed before re-visiting
+    expect(page).to have_button("Boards") # login has landed before re-visiting
     visit "/board?project=#{project.id}"
 
     click_button "+ Add separator"

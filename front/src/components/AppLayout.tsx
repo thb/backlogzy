@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Kanban, CalendarDays, Settings, ShieldCheck } from "lucide-react";
+import { CalendarDays, Settings, ShieldCheck } from "lucide-react";
 import { meQueryOptions, currentMembership, isAdmin } from "@/lib/auth";
+import { SidebarProjects } from "@/features/backlog/SidebarProjects";
 import { UserMenu } from "./UserMenu";
 import { NotificationBell } from "./NotificationBell";
 import { SidebarNav, type NavItem } from "./SidebarNav";
@@ -11,9 +12,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const { data: user } = useSuspenseQuery(meQueryOptions);
   const account = currentMembership(user);
 
-  const navItems: NavItem[] = [
-    { to: "/board", label: "Board", icon: Kanban },
-    { to: "/planning", label: "Planning", icon: CalendarDays },
+  const topItems: NavItem[] = [{ to: "/planning", label: "Planning", icon: CalendarDays }];
+  const bottomItems: NavItem[] = [
     { to: "/settings", label: "Settings", icon: Settings },
     ...(isAdmin(user) ? [{ to: "/admin", label: "Members", icon: ShieldCheck }] : []),
   ];
@@ -40,11 +40,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <div className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
               Menu
             </div>
-            <SidebarNav items={navItems} />
+            <SidebarNav items={topItems} />
+            <SidebarProjects />
+            <SidebarNav items={bottomItems} />
           </nav>
         </aside>
 
-        <main className="flex-1">{children}</main>
+        <main className="min-w-0 flex-1">{children}</main>
       </div>
     </div>
   );

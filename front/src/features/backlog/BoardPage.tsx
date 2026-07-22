@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
-import { TopBar } from "./TopBar";
-import { ProjectTabs } from "./ProjectTabs";
+import { BoardHeader } from "./BoardHeader";
 import { BacklogTable } from "./BacklogTable";
 import { DetailPanel } from "./DetailPanel";
 import { projectsQueryOptions, useCreateProject, useDeleteProject } from "./projectHooks";
@@ -119,16 +118,11 @@ export function BoardPage() {
     navigate({ search: (prev) => ({ ...prev, project: remaining[0]?.id, detail: undefined }) });
   }
 
+  const selectedProject = projects.find((p) => p.id === selectedId);
+
   return (
-    <div className="h-screen flex flex-col bg-white">
-      <TopBar>
-        <ProjectTabs
-          projects={projects}
-          activeId={selectedId}
-          onSelect={(id) => navigate({ search: (prev) => ({ ...prev, project: id }) })}
-          onDelete={handleDeleteProject}
-        />
-      </TopBar>
+    <div className="flex h-[calc(100vh-3.5rem)] flex-col bg-white">
+      {selectedProject && <BoardHeader project={selectedProject} onDelete={handleDeleteProject} />}
 
       {projectsQuery.isSuccess && projects.length === 0 ? (
         <EmptyState />
