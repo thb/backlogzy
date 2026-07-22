@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 /* Design tokens — adapt --color-primary per project brand. */
 @theme {

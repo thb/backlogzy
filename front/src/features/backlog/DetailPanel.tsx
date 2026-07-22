@@ -4,6 +4,7 @@ import { STATUS_CONFIG, STATUSES } from "./types";
 import type { ItemChanges } from "./itemHooks";
 import { formatDate } from "@/lib/dates";
 import { parseDuration, formatDuration } from "@/lib/duration";
+import { NotesEditor } from "./NotesEditor";
 
 type Props = {
   task: Task;
@@ -59,7 +60,7 @@ export function DetailPanel({ task, onUpdate, onUpdateStatus, onClose }: Props) 
 
       {/* Panel */}
       <div
-        className="fixed top-0 right-0 h-full w-[480px] max-w-[90vw] bg-white shadow-xl z-50 flex flex-col border-l border-gray-200 animate-slide-in"
+        className="fixed top-0 right-0 h-full w-[760px] max-w-[95vw] bg-white shadow-xl z-50 flex flex-col border-l border-gray-200 animate-slide-in"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
@@ -185,16 +186,7 @@ export function DetailPanel({ task, onUpdate, onUpdateStatus, onClose }: Props) 
           </div>
 
           {/* Notes — fills remaining space */}
-          <div className="flex-1 flex flex-col min-h-0 mb-4">
-            <label className="text-xs text-gray-400 uppercase tracking-wide block mb-2 shrink-0">Notes</label>
-            <textarea
-              value={notes}
-              onChange={(e) => handleNotesChange(e.target.value)}
-              placeholder="Add notes, details, markdown..."
-              className="flex-1 w-full text-xs text-gray-700 outline-none resize-none bg-gray-50 rounded-md p-3 border border-gray-200 focus:border-gray-300 font-mono leading-relaxed"
-            />
-            <p className="text-[10px] text-gray-300 mt-1 shrink-0">Markdown supported. Auto-saved.</p>
-          </div>
+          <NotesEditor key={task.id} value={notes} onChange={handleNotesChange} />
 
           {/* Created */}
           <div className="shrink-0 pt-2 border-t border-gray-100">
