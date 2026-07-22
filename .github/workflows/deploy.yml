@@ -47,14 +47,20 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: APP_DIR
+          envs: APP_DIR,GHCR_USER,GHCR_TOKEN
           script: |
+            # Ephemeral GHCR auth: the run's GITHUB_TOKEN can read this repo's packages,
+            # so the server never stores a long-lived PAT.
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             cd ~/docker/${APP_DIR}
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
             docker image prune -f
+            docker logout ghcr.io
         env:
           APP_DIR: ${{ vars.DEPLOY_APP_DIR }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   deploy-front:
     name: Front — build → Cloudflare Pages
