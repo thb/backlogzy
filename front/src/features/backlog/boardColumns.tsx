@@ -1,4 +1,5 @@
 import { createColumnHelper } from "@tanstack/react-table";
+import { Archive } from "lucide-react";
 import type { Item, Status } from "./types";
 import type { ItemChanges } from "./itemHooks";
 import { EditableCell } from "./EditableCell";
@@ -47,6 +48,9 @@ export function buildBoardColumns(actions: BoardColumnActions) {
         const hasNotes = !!item.notes;
         return (
           <div className="flex items-center group/desc">
+            {item.archived_at && (
+              <Archive className="ml-2 h-3 w-3 shrink-0 text-amber-500" aria-label="Archived" />
+            )}
             <EditableCell
               value={item.description}
               onChange={(description) => onUpdateItem(item.id, { description })}

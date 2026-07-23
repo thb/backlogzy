@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { flexRender, type Row } from "@tanstack/react-table";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Archive } from "lucide-react";
 import type { Item } from "./types";
 import { RowActions } from "./RowActions";
 
@@ -114,6 +115,9 @@ export function BoardRow({
                         <path d="M6 3l5 5-5 5V3z" />
                       </svg>
                     </button>
+                    {isArchived && (
+                      <Archive className="mr-1 h-3 w-3 shrink-0 text-amber-500" aria-label="Archived" />
+                    )}
                     <div className="min-w-0 flex-1">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </div>
