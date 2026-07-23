@@ -19,6 +19,18 @@ export function visibleItems(items: Item[], collapsed: Set<string>): Item[] {
   return out;
 }
 
+// The ids of a section block: the separator plus its tasks (until the next
+// separator). Used to archive/unarchive a whole section in one call.
+export function sectionBlockIds(items: Item[], separatorId: string): string[] {
+  const start = items.findIndex((i) => i.id === separatorId);
+  if (start === -1) return [separatorId];
+  const out = [separatorId];
+  for (let i = start + 1; i < items.length && items[i].kind !== "separator"; i++) {
+    out.push(items[i].id);
+  }
+  return out;
+}
+
 export function sectionCounts(items: Item[]): Map<string, number> {
   const counts = new Map<string, number>();
   let current: string | null = null;

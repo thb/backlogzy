@@ -5,6 +5,7 @@ import type { Item } from "./types";
 export interface ItemsParams {
   project_id?: string;
   kind?: "task" | "separator";
+  with_archived?: boolean;
 }
 
 export const itemsQueryOptions = (params: ItemsParams) =>
@@ -89,4 +90,34 @@ export function useReorderItems() {
         return index === -1 ? i : { ...i, position: index + 1 };
       }),
   );
+}
+
+// Bulk archive/unarchive (a whole section block in one call). Optimistic:
+// stamped in every cache; caches that exclude archived drop the rows too.
+export function useArchiveItems() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ ids, archived }: { ids: string[]; archived: boolean }) =>
+      api.post<void>("/v1/items/archive", { ids, archived }),
+    onMutate: async ({ ids, archived }) => {
+      await qc.cancelQueries({ queryKey: ["items"] });
+      const previous = qc.getQueriesData<Item[]>({ queryKey: ["items"] });
+      const stamp = archived ? new Date().toISOString() : null;
+      for (const [key] of previous) {
+        const params = key[1] as ItemsParams | undefined;
+        qc.setQueryData<Item[]>(key, (old) => {
+          if (!old) return old;
+          const next = old.map((i) => (ids.includes(i.id) ? { ...i, archived_at: stamp } : i));
+          return params?.with_archived ? next : next.filter((i) => !i.archived_at);
+        });
+      }
+      return { previous };
+    },
+    onError: (_err, _input, context) => {
+      context?.previous?.forEach(([key, data]) => qc.setQueryData(key, data));
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ["items"] });
+    },
+  });
 }

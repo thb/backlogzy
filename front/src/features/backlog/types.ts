@@ -64,6 +64,7 @@ export interface Item {
   planned_start: string | null; // "2026-04-01" date-only
   planned_end: string | null;
   completed_at: string | null;
+  archived_at: string | null;
   position: number;
   created_at: string;
 }

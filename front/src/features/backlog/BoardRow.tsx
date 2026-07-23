@@ -3,6 +3,7 @@ import { flexRender, type Row } from "@tanstack/react-table";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Item } from "./types";
+import { RowActions } from "./RowActions";
 
 type Sortable = ReturnType<typeof useSortable>;
 
@@ -36,6 +37,7 @@ export function BoardRow({
   columnCount,
   onRequestDelete,
   onAddTaskAfter,
+  onArchive,
   isCollapsed,
   hiddenCount,
   onToggleCollapse,
@@ -44,6 +46,7 @@ export function BoardRow({
   columnCount: number;
   onRequestDelete: (id: string) => void;
   onAddTaskAfter: (afterId: string) => void;
+  onArchive: (id: string, archived: boolean) => void;
   isCollapsed: boolean;
   hiddenCount: number;
   onToggleCollapse: (id: string) => void;
@@ -66,12 +69,13 @@ export function BoardRow({
   };
 
   const isSeparator = row.original.kind === "separator";
+  const isArchived = Boolean(row.original.archived_at);
 
   return (
     <tr
       ref={setNodeRef}
       style={style}
-      className={`group/row ${isSeparator ? "bg-gray-50" : "hover:bg-blue-50/30"}`}
+      className={`group/row ${isSeparator ? "bg-gray-50" : "hover:bg-blue-50/30"} ${isArchived ? "opacity-50" : ""}`}
     >
       {isSeparator ? (
         <>
@@ -122,7 +126,7 @@ export function BoardRow({
                 </td>
               );
             }
-            // Last cell = row actions (delete + add task below, like task rows)
+            // Last cell = row actions (same set as task rows)
             if (idx === row.getVisibleCells().length - 1) {
               return (
                 <td
@@ -130,22 +134,12 @@ export function BoardRow({
                   className="border border-gray-200"
                   style={{ width: cell.column.getSize() }}
                 >
-                  <div className="flex items-center justify-center opacity-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100">
-                    <button
-                      onClick={() => onRequestDelete(row.original.id)}
-                      className="text-gray-300 hover:text-red-500 text-sm px-0.5 cursor-pointer"
-                      title="Delete separator"
-                    >
-                      &times;
-                    </button>
-                    <button
-                      onClick={() => onAddTaskAfter(row.original.id)}
-                      className="text-gray-300 hover:text-blue-500 text-sm px-0.5 cursor-pointer"
-                      title="Add task below"
-                    >
-                      +
-                    </button>
-                  </div>
+                  <RowActions
+                    item={row.original}
+                    onRequestDelete={onRequestDelete}
+                    onAddTaskAfter={onAddTaskAfter}
+                    onArchive={onArchive}
+                  />
                 </td>
               );
             }

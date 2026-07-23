@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_06_06_090000) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_23_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -189,6 +189,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_06_06_090000) do
     t.float "position", default: 0.0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "archived_at"
+    t.index ["archived_at"], name: "index_items_on_archived_at"
     t.index ["planned_start"], name: "index_items_on_planned_start"
     t.index ["project_id", "position"], name: "index_items_on_project_id_and_position"
     t.index ["project_id"], name: "index_items_on_project_id"

@@ -11,9 +11,11 @@ import {
   useUpdateItem,
   useDeleteItem,
   useReorderItems,
+  useArchiveItems,
   type ItemChanges,
 } from "./itemHooks";
 import { statusChangePatch } from "./statusChangePatch";
+import { sectionBlockIds } from "./sectionUtils";
 import type { Status, Task } from "./types";
 
 const route = getRouteApi("/_auth/board");
@@ -53,7 +55,7 @@ function EmptyState() {
 }
 
 export function BoardPage() {
-  const { project: projectParam, detail } = route.useSearch();
+  const { project: projectParam, detail, archived: showArchived } = route.useSearch();
   const navigate = route.useNavigate();
 
   const projectsQuery = useQuery(projectsQueryOptions);
@@ -62,7 +64,10 @@ export function BoardPage() {
     projects.find((p) => p.id === projectParam)?.id ?? projects[0]?.id ?? null;
 
   const itemsQuery = useQuery({
-    ...itemsQueryOptions({ project_id: selectedId ?? undefined }),
+    ...itemsQueryOptions({
+      project_id: selectedId ?? undefined,
+      with_archived: showArchived || undefined,
+    }),
     enabled: selectedId !== null,
   });
   const items = itemsQuery.data ?? [];
@@ -71,6 +76,7 @@ export function BoardPage() {
   const updateItem = useUpdateItem();
   const deleteItemMutation = useDeleteItem();
   const reorderItems = useReorderItems();
+  const archiveItems = useArchiveItems();
   const deleteProject = useDeleteProject();
 
   const detailTask = detail
@@ -112,6 +118,14 @@ export function BoardPage() {
     updateItem.mutate({ id, changes: statusChangePatch(item, status) });
   }
 
+  // Archiving a section archives its whole block (separator + tasks).
+  function handleArchive(id: string, archive: boolean) {
+    const item = items.find((i) => i.id === id);
+    if (!item) return;
+    const ids = item.kind === "separator" ? sectionBlockIds(items, id) : [id];
+    archiveItems.mutate({ ids, archived: archive });
+  }
+
   function handleDeleteProject(id: string) {
     deleteProject.mutate(id);
     const remaining = projects.filter((p) => p.id !== id);
@@ -122,7 +136,16 @@ export function BoardPage() {
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] flex-col bg-white">
-      {selectedProject && <BoardHeader project={selectedProject} onDelete={handleDeleteProject} />}
+      {selectedProject && (
+        <BoardHeader
+          project={selectedProject}
+          onDelete={handleDeleteProject}
+          showArchived={Boolean(showArchived)}
+          onToggleArchived={(value) =>
+            navigate({ search: (prev) => ({ ...prev, archived: value || undefined }) })
+          }
+        />
+      )}
 
       {projectsQuery.isSuccess && projects.length === 0 ? (
         <EmptyState />
@@ -137,6 +160,7 @@ export function BoardPage() {
           onAddTaskAfter={handleAddTaskAfter}
           onAddSeparator={handleAddSeparator}
           onOpenDetail={(id) => navigate({ search: (prev) => ({ ...prev, detail: id }) })}
+          onArchive={handleArchive}
         />
       )}
 

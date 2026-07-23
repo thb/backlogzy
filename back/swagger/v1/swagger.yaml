@@ -134,9 +134,14 @@ paths:
           enum:
           - task
           - separator
+      - name: with_archived
+        in: query
+        required: false
+        schema:
+          type: boolean
       responses:
         '200':
-          description: all tasks across projects with ?kind=task
+          description: archived items are hidden by default, shown with ?with_archived=true
           content:
             application/json:
               schema:
@@ -231,6 +236,36 @@ paths:
                     format: uuid
               required:
               - ids
+  "/v1/items/archive":
+    post:
+      summary: Archive or unarchive a batch of items (a section block in one call)
+      tags:
+      - Items
+      security:
+      - bearer_auth: []
+        account_header: []
+      parameters: []
+      responses:
+        '204':
+          description: stamps or clears archived_at on every id
+        '404':
+          description: rejects ids from another account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                archived:
+                  type: boolean
+              required:
+              - ids
+              - archived
   "/v1/items/{id}":
     parameters:
     - name: id
@@ -645,6 +680,10 @@ components:
           format: date
           nullable: true
         completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        archived_at:
           type: string
           format: date-time
           nullable: true

@@ -1,13 +1,23 @@
 import { useState, useRef, useEffect } from "react";
-import { Trash2 } from "lucide-react";
 import { PROJECT_COLORS, type Project } from "./types";
 import { useUpdateProject } from "./projectHooks";
 import { ColorPicker } from "./ColorPicker";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { BoardMenu } from "./BoardMenu";
 
-// Current-board toolbar: inline rename, color picker, delete. Navigation lives
-// in the sidebar; deletion is owned by the page (it must fix the URL too).
-export function BoardHeader({ project, onDelete }: { project: Project; onDelete: (id: string) => void }) {
+// Current-board toolbar: inline rename, color picker, "⋮" options menu.
+// Navigation lives in the sidebar; deletion is owned by the page (URL fix).
+export function BoardHeader({
+  project,
+  onDelete,
+  showArchived,
+  onToggleArchived,
+}: {
+  project: Project;
+  onDelete: (id: string) => void;
+  showArchived: boolean;
+  onToggleArchived: (value: boolean) => void;
+}) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(project.name);
   const [pickingColor, setPickingColor] = useState(false);
@@ -82,14 +92,16 @@ export function BoardHeader({ project, onDelete }: { project: Project; onDelete:
 
       <div className="flex-1" />
 
-      <button
-        type="button"
-        onClick={() => setConfirming(true)}
-        className="rounded p-1 text-gray-300 hover:bg-red-50 hover:text-red-500"
-        title="Delete board"
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
+      {showArchived && (
+        <span className="mr-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] text-amber-600">
+          archived shown
+        </span>
+      )}
+      <BoardMenu
+        showArchived={showArchived}
+        onToggleArchived={onToggleArchived}
+        onRequestDelete={() => setConfirming(true)}
+      />
 
       {confirming && (
         <ConfirmDialog

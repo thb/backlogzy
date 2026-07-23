@@ -24,6 +24,7 @@ Rails.application.routes.draw do
     end
     resources :items, except: %i[show] do
       post :reorder, on: :collection
+      post :archive, on: :collection
     end
     resources :habit_entries, only: %i[index] do
       post :toggle, on: :collection

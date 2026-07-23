@@ -5,6 +5,7 @@ import { EditableCell } from "./EditableCell";
 import { StatusSelect } from "./StatusSelect";
 import { HoursCell } from "./HoursCell";
 import { EditableDateCell } from "./EditableDateCell";
+import { RowActions } from "./RowActions";
 
 export interface BoardColumnActions {
   onUpdateItem: (id: string, changes: ItemChanges) => void;
@@ -12,12 +13,13 @@ export interface BoardColumnActions {
   onAddTaskAfter: (afterId: string) => void;
   onOpenDetail: (id: string) => void;
   onRequestDelete: (id: string) => void;
+  onArchive: (id: string, archived: boolean) => void;
 }
 
 const columnHelper = createColumnHelper<Item>();
 
 export function buildBoardColumns(actions: BoardColumnActions) {
-  const { onUpdateItem, onUpdateStatus, onAddTaskAfter, onOpenDetail, onRequestDelete } = actions;
+  const { onUpdateItem, onUpdateStatus, onAddTaskAfter, onOpenDetail, onRequestDelete, onArchive } = actions;
   return [
     columnHelper.display({
       id: "drag",
@@ -167,25 +169,15 @@ export function buildBoardColumns(actions: BoardColumnActions) {
     columnHelper.display({
       id: "actions",
       header: "",
-      size: 48,
+      size: 64,
       enableResizing: false,
       cell: ({ row }) => (
-        <div className="flex items-center justify-center opacity-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100 h-[28px]">
-          <button
-            onClick={() => onRequestDelete(row.original.id)}
-            className="text-gray-300 hover:text-red-500 text-sm px-0.5 cursor-pointer"
-            title="Delete"
-          >
-            &times;
-          </button>
-          <button
-            onClick={() => onAddTaskAfter(row.original.id)}
-            className="text-gray-300 hover:text-blue-500 text-sm px-0.5 cursor-pointer"
-            title="Add task below"
-          >
-            +
-          </button>
-        </div>
+        <RowActions
+          item={row.original}
+          onRequestDelete={onRequestDelete}
+          onAddTaskAfter={onAddTaskAfter}
+          onArchive={onArchive}
+        />
       ),
     }),
   ];

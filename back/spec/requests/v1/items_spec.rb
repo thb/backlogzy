@@ -4,7 +4,8 @@ RSpec.describe "Items", type: :request do
   let(:account) { create(:account) }
   let(:user) { create(:user) }
   let!(:membership) { create(:account_membership, user: user, account: account) }
-  let(:Authorization) { "Bearer #{Auth::Token.generate_pair(user)[:access_token]}" }
+  let(:bearer) { "Bearer #{Auth::Token.generate_pair(user)[:access_token]}" }
+  let(:Authorization) { bearer }
   let(:"X-Account") { account.slug }
   let(:project) { create(:project, account: account) }
 
@@ -15,9 +16,11 @@ RSpec.describe "Items", type: :request do
       security [{ bearer_auth: [], account_header: [] }]
       parameter name: :project_id, in: :query, required: false, schema: { type: :string, format: :uuid }
       parameter name: :kind, in: :query, required: false, schema: { type: :string, enum: %w[task separator] }
+      parameter name: :with_archived, in: :query, required: false, schema: { type: :boolean }
 
       let(:project_id) { nil }
       let(:kind) { nil }
+      let(:with_archived) { nil }
 
       response "200", "board items ordered by position" do
         schema type: :object,
@@ -48,6 +51,26 @@ RSpec.describe "Items", type: :request do
         run_test! do |response|
           body = JSON.parse(response.body)
           expect(body["data"].map { |i| i["kind"] }).to eq(%w[task])
+        end
+      end
+
+      response "200", "archived items are hidden by default, shown with ?with_archived=true" do
+        let(:project_id) { project.id }
+
+        before do
+          create(:item, project: project, description: "Live")
+          create(:item, project: project, description: "Old", archived_at: Time.current)
+        end
+
+        run_test! do |first_response|
+          body = JSON.parse(first_response.body)
+          expect(body["data"].map { |i| i["description"] }).to eq(%w[Live])
+
+          # `response` (not the shadowed block arg) reads the latest request.
+          get "/v1/items", params: { project_id: project.id, with_archived: true },
+                           headers: { "Authorization" => bearer, "X-Account" => account.slug }
+          all = JSON.parse(response.body)["data"].map { |i| i["description"] }
+          expect(all).to contain_exactly("Live", "Old")
         end
       end
 
@@ -118,6 +141,43 @@ RSpec.describe "Items", type: :request do
           expect(second.reload.position).to eq(1)
           expect(first.reload.position).to eq(2)
         end
+      end
+    end
+  end
+
+  path "/v1/items/archive" do
+    post "Archive or unarchive a batch of items (a section block in one call)" do
+      tags "Items"
+      consumes "application/json"
+      security [{ bearer_auth: [], account_header: [] }]
+      parameter name: :payload, in: :body, schema: {
+        type: :object,
+        properties: {
+          ids: { type: :array, items: { type: :string, format: :uuid } },
+          archived: { type: :boolean }
+        },
+        required: %w[ids archived]
+      }
+
+      response "204", "stamps or clears archived_at on every id" do
+        let(:sep) { create(:item, :separator, project: project) }
+        let(:task) { create(:item, project: project) }
+        let(:payload) { { ids: [sep.id, task.id], archived: true } }
+
+        run_test! do
+          expect(sep.reload).to be_archived
+          expect(task.reload).to be_archived
+
+          post "/v1/items/archive", params: { ids: [sep.id, task.id], archived: false }.to_json,
+                                    headers: { "Authorization" => bearer, "X-Account" => account.slug,
+                                               "Content-Type" => "application/json" }
+          expect(sep.reload).not_to be_archived
+        end
+      end
+
+      response "404", "rejects ids from another account" do
+        let(:payload) { { ids: [create(:item).id], archived: true } }
+        run_test!
       end
     end
   end

@@ -50,6 +50,7 @@ RSpec.configure do |config|
               planned_start: { type: :string, format: :date, nullable: true },
               planned_end: { type: :string, format: :date, nullable: true },
               completed_at: { type: :string, format: "date-time", nullable: true },
+              archived_at: { type: :string, format: "date-time", nullable: true },
               position: { type: :number },
               created_at: { type: :string, format: "date-time" }
             },

@@ -11,5 +11,10 @@ class Item < ApplicationRecord
   # Scopes consumed by has_scope in the controller.
   scope :by_project, ->(project_id) { where(project_id: project_id) }
   scope :by_kind, ->(kind) { where(kind: kind) }
+  scope :active, -> { where(archived_at: nil) }
   scope :ordered, -> { order(:position, :created_at) }
+
+  def archived?
+    archived_at.present?
+  end
 end

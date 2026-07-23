@@ -35,6 +35,7 @@ type Props = {
   onAddTaskAfter: (afterId: string) => void;
   onAddSeparator: () => void;
   onOpenDetail: (id: string) => void;
+  onArchive: (id: string, archived: boolean) => void;
 };
 
 export function BacklogTable({
@@ -47,6 +48,7 @@ export function BacklogTable({
   onAddTaskAfter,
   onAddSeparator,
   onOpenDetail,
+  onArchive,
 }: Props) {
   const { columnSizing, setColumnSizing } = useColumnSizing("board");
   const { collapsed, toggle } = useCollapsedSections();
@@ -70,8 +72,9 @@ export function BacklogTable({
         onAddTaskAfter,
         onOpenDetail,
         onRequestDelete: setDeleteConfirmId,
+        onArchive,
       }),
-    [onUpdateItem, onUpdateStatus, onAddTaskAfter, onOpenDetail],
+    [onUpdateItem, onUpdateStatus, onAddTaskAfter, onOpenDetail, onArchive],
   );
 
   const table = useReactTable({
@@ -136,6 +139,7 @@ export function BacklogTable({
                   columnCount={columns.length}
                   onRequestDelete={setDeleteConfirmId}
                   onAddTaskAfter={onAddTaskAfter}
+                  onArchive={onArchive}
                   isCollapsed={collapsed.has(row.original.id)}
                   hiddenCount={counts.get(row.original.id) ?? 0}
                   onToggleCollapse={toggle}

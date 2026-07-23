@@ -5,9 +5,11 @@ module V1
 
     # GET /v1/items?project_id=... (board) or ?kind=task (planning, all projects).
     # Whole collection, ordered by position — the board needs every row.
+    # Archived items are excluded unless ?with_archived=true.
     def index
-      scoped = apply_scopes(current_account.items).ordered
-      render json: { data: V1::ItemBlueprint.render_as_hash(scoped) }
+      scoped = apply_scopes(current_account.items)
+      scoped = scoped.active unless truthy?(params[:with_archived])
+      render json: { data: V1::ItemBlueprint.render_as_hash(scoped.ordered) }
     end
 
     # POST /v1/items
@@ -45,7 +47,23 @@ module V1
       head :no_content
     end
 
+    # POST /v1/items/archive  { ids: [...], archived: true|false } — bulk toggle.
+    # The front sends a whole section block (separator + its tasks) in one call.
+    def archive
+      stamp = truthy?(params[:archived]) ? Time.current : nil
+      Item.transaction do
+        params.require(:ids).each do |id|
+          current_account.items.find(id).update!(archived_at: stamp)
+        end
+      end
+      head :no_content
+    end
+
     private
+
+    def truthy?(value)
+      ActiveModel::Type::Boolean.new.cast(value) == true
+    end
 
     def item
       @item ||= current_account.items.find(params[:id])
