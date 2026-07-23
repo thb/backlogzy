@@ -33,6 +33,21 @@ export function PlanningPage() {
 
   const tasks = useMemo(() => items.filter((i): i is Task => i.kind === "task"), [items]);
 
+  // Optionally hide project columns with nothing planned in the visible week.
+  const visibleProjects = useMemo(() => {
+    if (!search.hide_empty) return projects;
+    const [weekStart, weekEnd] = [dates[0], dates[6]];
+    return projects.filter((p) =>
+      tasks.some(
+        (t) =>
+          t.project_id === p.id &&
+          t.planned_start != null &&
+          t.planned_start <= weekEnd &&
+          (t.planned_end ?? t.planned_start) >= weekStart,
+      ),
+    );
+  }, [projects, tasks, dates, search.hide_empty]);
+
   // Derive per-day trackers from the fetched range
   const pomodorosByDate = useMemo(() => {
     const map: Record<string, number> = {};
@@ -110,7 +125,7 @@ export function PlanningPage() {
   return (
     <div className="flex h-[calc(100vh-3.5rem)] flex-col bg-white">
       {/* Week navigation */}
-      <div className="flex items-center justify-center gap-4 px-4 py-2 border-b border-gray-200 bg-white">
+      <div className="relative flex items-center justify-center gap-4 px-4 py-2 border-b border-gray-200 bg-white">
         <button
           onClick={() => setStart(toDateStr(addDays(startDate, -7)))}
           className="text-sm text-gray-400 hover:text-gray-600 cursor-pointer"
@@ -129,10 +144,24 @@ export function PlanningPage() {
         >
           next →
         </button>
+
+        <label className="absolute right-4 flex cursor-pointer items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600">
+          <input
+            type="checkbox"
+            checked={Boolean(search.hide_empty)}
+            onChange={(e) =>
+              void navigate({
+                search: (prev) => ({ ...prev, hide_empty: e.target.checked || undefined }),
+              })
+            }
+            className="accent-gray-500"
+          />
+          Hide empty projects
+        </label>
       </div>
 
       <PlanningGrid
-        projects={projects}
+        projects={visibleProjects}
         tasks={tasks}
         dates={dates}
         pomodorosByDate={pomodorosByDate}
